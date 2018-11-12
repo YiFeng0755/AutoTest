@@ -1,0 +1,230 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               "Totally" \ \ \ \ \ \ \ 可选字段，填非0时表示封禁用户所有发言，无符号整型，谨慎使用
+...
+...               "ChannelID" \ \ \ \ \ 可选字段，用户所在频道ID，字符串；为“@_all”时代表操作的对象是所有频道，为“@_private”时代表操作的对象是所有个人私聊（谨慎使用）
+...
+...               "ChannelDescription" \ \ \ \ \ \ 可选字段，用户所在频道描述，字符串
+...
+...               "ShutUpTime" \ \ \ \ \ \ \ \ 可选字段，设置权限生效时间段（单位秒），不设置默认为永久
+...
+...               "UserList" \ \ \ \ \ \ \ \ \ 用户列表(一次不超过100个用户)，包括以下属性：
+...
+...               "UserID" \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 用户ID, app内唯一，字符串；
+Force Tags        Forbid_Im_Send_Msg
+Default Tags      send
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+批量禁言IM用户
+    [Documentation]    body实例
+    ...
+    ...    {
+    ...    "ChannelID":"channel123",
+    ...    "ChannelDescription":"ios-1",
+    ...    "ShutUpTime":259200,
+    ...    "UserList":[
+    ...    {
+    ...    "UserID":"zhubo"
+    ...    },
+    ...    {
+    ...    "UserID":"test1"
+    ...    }]
+    ...    }
+    [Tags]    smoke
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    2
+    ${UserList}    Create Query Im User State N List    ${flag}
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${num}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+Totally封禁用户所有发言
+    [Documentation]    "Totally" \ \ 可选字段，填非0时表示封禁用户所有发言，无符号整型，谨慎使用
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    2
+    ${UserList}    Create Query Im User State N List    ${flag}
+    ${Totally}    Convert To Integer    2
+    ${data}    Create Dictionary    Totally=${Totally}    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${num}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+Totally为空
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    2
+    ${UserList}    Create Query Im User State N List    ${flag}
+    #${Totally}    Convert To Integer    2
+    ${data}    Create Dictionary    Totally=    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${num}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+ChannelID为空
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    2
+    ${UserList}    Create Query Im User State N List    ${flag}
+    ${Totally}    Convert To Integer    2
+    ${data}    Create Dictionary    Totally=${Totally}    ChannelID=    ChannelDescription=ios-1    ShutUpTime=${num}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+ChannelDescription为空
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    2
+    ${UserList}    Create Query Im User State N List    ${flag}
+    ${Totally}    Convert To Integer    2
+    ${data}    Create Dictionary    Totally=${Totally}    ChannelID=channel123    ChannelDescription=    ShutUpTime=${num}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+ChannelDescription为浮点数
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    2
+    ${UserList}    Create Query Im User State N List    ${flag}
+    ${Totally}    Convert To Integer    2
+    ${ChannelDescription}    Evaluate    float(100.5)
+    ${data}    Create Dictionary    Totally=${Totally}    ChannelID=channel123    ChannelDescription=${ChannelDescription}    ShutUpTime=${num}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+ShutUpTime为空
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    2
+    ${UserList}    Create Query Im User State N List    ${flag}
+    ${Totally}    Convert To Integer    2
+    ${data}    Create Dictionary    Totally=${Totally}    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+UserList为空
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    2
+    ${UserList}    Create Query Im User State N List    ${flag}
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${num}    UserList=
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70002
+
+UserID用户数量达到100个
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    100
+    ${UserList}    Create Query Im User State N List    ${flag}
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${num}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID用户数量大于100个
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    101
+    ${UserList}    Create Query Im User State N List    ${flag}
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${num}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID用户数量小于100个
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    99
+    ${UserList}    Create Query Im User State N List    ${flag}
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${num}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID为空
+    log    Forbid_Im_Send_Msg
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    2
+    ${UserID}    Create Dictionary    UserID=
+    ${UserList}    Create List    ${UserID}
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${num}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+body为空
+    log    Forbid_Im_Send_Msg
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70002
+
+禁言频道内用户获取用户消息
+    [Documentation]    操作步骤：
+    ...
+    ...    1，用户加入频道
+    ...
+    ...    2，发消息
+    ...
+    ...    3，禁言频道用户
+    ...
+    ...    4，用户在此频道内发消息
+    log    Forbid_Im_Send_Msg
+    Join Channel    user123    channel123
+    #发送消息
+    Send Message    user123    channel123
+    #获取消息
+    Query channel Message    channel123
+    #	${res1} = {u'ErrorCode': 0, u'msg_total': 16, u'msg_cnt': 1, u'ActionStatus': u'OK', u'msg_list':${re
+    #禁言频道内用户
+    ${num}    Convert To Integer    259200
+    ${flag}    Convert To Integer    2
+    ${UserList}    Create Query Im User State N List    ${flag}
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${num}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_send_msg    ${data}
+    Send Message    user123    channel123
+    ${result}    Query channel Message    channel123
+    #后面结果待补充
+    	#${res1} = {u'ActionStatus': u'FAIL', u'ErrorCode': -1, u'ErrorInfo': u'empty record'}${re
+
+*** Keywords ***
+Join Channel
+    [Arguments]    ${UserID}    ${ChannelID}
+    [Documentation]    请求加入房间接口
+    ...    query_im_enter_channel
+    ${data}    Create Dictionary    UserID=${UserID}    ChannelID=${ChannelID}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_enter_channel    ${data}
+
+Send Message
+    [Arguments]    ${UserID}    ${ChannelID}
+    [Timeout]
+    ${MsgSeq}    Convert To Integer    99807732
+    ${ChatType}    Convert To Integer    2
+    ${data}    Create Dictionary    MsgSeq=${MsgSeq}    ChatType=${ChatType}    SendID=${UserID}    RecvID=${ChannelID}    Content=acbdffsatrfhgfdh
+    ${res1}    Post Data    ${URL}    v1/im/query_im_send_msg    ${data}
+
+Query channel Message
+    [Arguments]    ${ChannelID}
+    ${Limit}    Convert To Integer    1
+    ${MsgSeq}    Convert To Integer    0
+    ${BeginTime}    Convert To Integer    1528690200
+    ${EndTime}    Convert To Integer    1528726200
+    ${data}    Create Dictionary    ChannelID=${ChannelID}    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}

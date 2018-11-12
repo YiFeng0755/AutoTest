@@ -1,0 +1,89 @@
+*** Settings ***
+Documentation     请求退出IM频道
+...
+...
+...               body为json格式，各个字段解释如下：
+...
+...               "UserID" ： \ 用户ID，app内唯一，字符串
+...
+...               " ChannelID" ： 频道ID，app内唯一，字符串
+Force Tags        query_im_leave_channel
+Default Tags      leave
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+请求退出IM频道
+    [Tags]    smoke
+    #用户ID为空
+    Log    query_im_leave_channel
+    ${data}    Create Dictionary    UserID=    ChannelID=2019999
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70006
+
+UserID为空
+    #用户ID为空
+    Log    query_im_leave_channel
+    ${data}    Create Dictionary    UserID=    ChannelID=2019999
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70006
+
+UserID长度300字符
+    Log    query_im_leave_channel
+    ${UserID}    Convert To Integer    123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890
+    ${data}    Create Dictionary    UserID=${UserID}    ChannelID=2019999
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+ChannelID为空
+    Log    query_im_leave_channel
+    ${data}    Create Dictionary    UserID=9999    ChannelID=
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70003
+
+ChannelID中间有空格
+    Log    query_im_leave_channel
+    ${data}    Create Dictionary    UserID=9999    ChannelID=10 20 30
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+body为空
+    Log    query_im_leave_channel
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70006
+
+多个用户同时退出频道
+    Log    query_im_leave_channel
+    Join Channel    user123    channel123
+    Join Channel    user234    channel123
+    Join Channel    user124    channel123
+    Join Channel    user786    channel123
+    Join Channel    user908    channel123
+    ${data}    Create Dictionary    UserID=user123    ChannelID=channel123
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
+    ${data}    Create Dictionary    UserID=user234    ChannelID=channel123
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
+    ${data}    Create Dictionary    UserID=user124    ChannelID=channel123
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+*** Keywords ***
+Join Channel
+    [Arguments]    ${UserID}    ${ChannelID}
+    ${data}    Create Dictionary    UserID=${UserID}    ChannelID=${ChannelID}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_enter_channel    ${data}

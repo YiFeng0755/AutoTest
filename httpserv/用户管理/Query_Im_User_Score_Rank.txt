@@ -1,0 +1,244 @@
+*** Settings ***
+Documentation     查询用户积分排行
+...
+...               根据时间段查询主播某天收到的积分信息或积分排行榜
+...
+...               "UserID"： 主播用户ID，app内唯一，字符串
+...
+...               "Date" \ \ ： 日期，格式为"YYYYMMDD"
+...
+...               "Summary" ：可选字段，是否汇总信息
+...
+...               "SvrArea" ：可选字段，用户区服，查询积分排行榜时有效
+...
+...               "Limit"：可选字段，最大信息条数（大于0，不大于200），查询积分排行榜时有效
+...
+...               "NeedFavoriteAnchor": 是否需要返回排行榜中每个用户对应的送礼物最多的主播信息，1是需要返回，其它值不需要，整数，可选字段，查询积分排行榜时有效
+Force Tags        query_im_user_score_rank
+Default Tags      rank
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeRequestLib.py
+Library           ../lib/YouMeAnchorRankLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+查询主播积分
+    [Documentation]    {
+    ...    "UserID":"wrqw",
+    ...    "Date":"20170420"，
+    ...    "Limit": 5,
+    ...    "NeedFavoriteAnchor": 1
+    ...    }
+    [Tags]    User    Anchor    smoke
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To Integer    5
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=abc    SvrArea=1    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID为空
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To Integer    5
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${data}    Create Dictionary    UserID=    Date=${Date}    Summary=abc    SvrArea=1    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70006
+
+UserID字符长度超过600
+    Log    query_im_user_score_rank
+    ${UserID}    Convert To Integer    123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To Integer    5
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${data}    Create Dictionary    UserID=${UserID}    Date=${Date}    Summary=abc    SvrArea=1    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+date为空
+    Log    query_im_user_score_rank
+    ${Limit}    Convert To Integer    5
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${data}    Create Dictionary    UserID=wrqw    Date=    Summary=abc    SvrArea=1    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70013
+
+date长度超过8位
+    Log    query_im_user_score_rank
+    ${Limit}    Convert To Integer    5
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${data}    Create Dictionary    UserID=wrqw    Date=20180507123    Summary=abc    SvrArea=1    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+date长度少于8位
+    Log    query_im_user_score_rank
+    ${Limit}    Convert To Integer    5
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${data}    Create Dictionary    UserID=wrqw    Date=201805    Summary=abc    SvrArea=1    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70013
+
+Summary值为空
+    Log    query_im_user_score_rank
+    ${Limit}    Convert To Integer    5
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${Date}    Convert To Bytes    abc123@#$
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=    SvrArea=1    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70013
+
+SvrArea值为空
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Summary}    Convert To Bytes    abc123@#$
+    ${Limit}    Convert To Integer    5
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=${Summary}    SvrArea=    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+SvrArea长度超过300
+    Log    query_im_user_score_rank
+    ${Limit}    Convert To Integer    5
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${SvrArea}    Convert To Integer    123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890
+    ${data}    Create Dictionary    UserID=wrqw    Date=20180507    Summary=abc    SvrArea=123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+limit值为0
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To Integer    0
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${SvrArea}    Convert To Bytes    abc123#$%
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=abc    SvrArea=${SvrArea}    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+limit为最大值200
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${SvrArea}    Convert To Bytes    abc123#$%
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=abc    SvrArea=${SvrArea}    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+limit超过最大值
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To Integer    201
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${SvrArea}    Convert To Bytes    abc123#$%
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=abc    SvrArea=${SvrArea}    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+limit为中英文
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To String    微微abc
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${SvrArea}    Convert To Bytes    abc123#$%
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=abc    SvrArea=${SvrArea}    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+NeedFavoriteAnchor为空
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To Bytes    abc123@#$
+    ${SvrArea}    Convert To Bytes    abc123#$%
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=abc    SvrArea=${SvrArea}    Limit=${Limit}
+    ...    NeedFavoriteAnchor=
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+NeedFavoriteAnchor设置需要返回主播信息
+    [Documentation]    "NeedFavoriteAnchor": 是否需要返回排行榜中每个用户对应的送礼物最多的主播信息，1是需要返回，其它值不需要，整数，可选字段，查询积分排行榜时有效
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To Integer    5
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=abc    SvrArea=1    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+NeedFavoriteAnchor设置不需要返回主播信息
+    [Documentation]    "NeedFavoriteAnchor": 是否需要返回排行榜中每个用户对应的送礼物最多的主播信息，1是需要返回，其它值不需要，整数，可选字段，查询积分排行榜时有效
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To Integer    100
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=abc    SvrArea=1    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+NeedFavoriteAnchor中间有空格
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To Integer    100
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=abc    SvrArea=1    Limit=${Limit}
+    ...    NeedFavoriteAnchor=10 20 30
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+NeedFavoriteAnchor长度超过300字符
+    Log    query_im_user_score_rank
+    ${Date}    Convert To Integer    20180412
+    ${Limit}    Convert To Integer    5
+    ${NeedFavoriteAnchor}    Convert To Integer    123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890123456789013245678901234567890132456789012345678901324567890
+    ${data}    Create Dictionary    UserID=wrqw    Date=${Date}    Summary=abc    SvrArea=1    Limit=${Limit}
+    ...    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+body内容为空
+    Log    query_im_user_score_rank
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70006

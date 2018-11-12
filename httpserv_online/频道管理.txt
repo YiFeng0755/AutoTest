@@ -1,0 +1,41 @@
+*** Settings ***
+Library           lib/YouMeRequestLib.py
+Library           RequestsLibrary
+Library           Collections
+
+*** Variables ***
+${URL}            http://api.youme.im/
+
+*** Test Cases ***
+查询指定游戏的Talk频道列表
+    [Documentation]    get_talk_channel_list_body
+    Log    get_talk_channel_list
+    ${ID}    Convert to Integer    345
+    ${data}    create Dictionary    AppID    ${ID}
+    ${res1}    Post Data    ${URL}    v1/im/get_talk_channel_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Key    ${res1}    ChannelList
+    Dictionary should contain Key    ${res1}    AppID
+
+查询指定游戏指定Talk频道的用户列表
+    Log    get_talk_user_list_on_a_channel
+    ${ID}    Convert to Integer    345
+    ${data}    create Dictionary    AppID    ${ID}    ChannelID    1111234
+    ${res1}    Post Data    ${URL}    v1/im/get_talk_user_list_on_a_channel    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Key    ${res1}    UserList
+    Dictionary should contain Key    ${res1}    Total
+    ${ID}    Convert to Integer    10000
+    ${data}    create Dictionary    AppID    ${ID}    ChannelID    1111234
+    ${res1}    Post Data    ${URL}    v1/im/get_talk_user_list_on_a_channel    ${data}
+    Dictionary should contain Item    ${res1}    ErrorCode    70041
+
+踢出指定游戏指定Talk频道的用户
+    Log    admin_kick_user
+    ${data}    Create Dictionary    UserID=1234    ChannelID=1111234
+    ${res1}    Post Data    ${URL}    v1/im/query_im_enter_channel    ${data}
+    ${appId}    Convert to Integer    345
+    ${time}    Convert to Integer    60
+    ${data}    Create Dictionary    app_id=${appId}    channel_id=1111234    kick_user_id=1234    kick_time=${time}    op_user=test
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ErrorCode    70051

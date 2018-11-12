@@ -1,0 +1,101 @@
+*** Settings ***
+Documentation     根据发送礼物的用户ID、主播用户ID、区服名、频道ID查询满足条件的礼物积分
+...
+...               body为json格式，各个字段解释如下：
+...
+...               "StartDate" \ \ : 查询起始日期，字符串，格式为YYYYMMDD，起始日期若给定，则与当前自然日期相比不可以往前超过35天，可选字段
+...
+...               "EndDate" \ \ \ \ : 查询结束日期，字符串，格式为YYYYMMDD，可选字段
+Force Tags        Query Im Gift Score
+Default Tags      score
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+查询玩家积分
+    [Documentation]    query_im_gift_score
+    ...
+    ...    参数样例
+    ...    {"StartDate": "","EndDate": "","UserID": "7946"}
+    [Tags]    User    smoke
+    Log    query_im_gift_score
+    ${data}    Create Dictionary    StartDate=20180507    EndDate=20180531    UserID=7946
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70032
+
+StartDate为空
+    [Tags]    Anchor    User
+    Log    query_im_gift_score
+    ${data}    Create Dictionary    StartDate=    EndDate=20180531    UserID=7946
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Key    ${res1}    GiftScore
+    Dictionary should contain Key    ${res1}    GiftCount
+
+StartDate长度超过日期长度
+    Log    query_im_gift_score
+    ${data}    Create Dictionary    StartDate=20180507123    EndDate=20180531    UserID=7946
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70032
+
+StartDate长度少于日期长度
+    Log    query_im_gift_score
+    ${data}    Create Dictionary    StartDate=201805    EndDate=20180531    UserID=7946
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70013
+
+StartDate为中英文
+    Log    query_im_gift_score
+    ${StartDate}    Convert To String    牛奶abc
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=20180531    UserID=7946
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70013
+
+EndDate为空
+    [Tags]    Anchor    User
+    Log    query_im_gift_score
+    ${data}    Create Dictionary    StartDate=20180507    EndDate=    UserID=7946
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70032
+
+EndDate长度超过日期长度
+    Log    query_im_gift_score
+    ${data}    Create Dictionary    StartDate=20180507    EndDate=20180531201    UserID=7946
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70032
+
+EndDate长度少于日期长度
+    Log    query_im_gift_score
+    ${data}    Create Dictionary    StartDate=20180507    EndDate=201805    UserID=7946
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70013
+
+EndDate为多种类型组合
+    Log    query_im_gift_score
+    ${EndDate}    Convert To Bytes    abc123@#$
+    ${data}    Create Dictionary    StartDate=20180507    EndDate=${EndDate}    UserID=7946
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70013
+
+UserID为空
+    Log    query_im_gift_score
+    ${data}    Create Dictionary    StartDate=20180507    EndDate=20180531    UserID=
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70032

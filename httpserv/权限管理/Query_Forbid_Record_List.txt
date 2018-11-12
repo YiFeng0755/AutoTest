@@ -1,0 +1,103 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               "RecordSeq" 记录数序号，无符号整型，用于分页查询操作
+...
+...               "Limit" \ 本次查询的消息条数上限(最多100条)，小于等于0或者大于100会提示参数错误，整型
+...
+...               "OrderBy" \ 排序依据 ，字符串，可选字段，合法参数："userid"（用户名排序），"updatetime"（更新时间排序）
+...
+...               body实例
+...
+...               {
+...               "RecordSeq" : 0,
+...               "Limit" : 10,
+...               "OrderBy" : "updatetime"
+...               }
+Force Tags        Query_Forbid_Record_List
+Default Tags      forbid
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+查询封禁记录操作列表
+    [Documentation]    {
+    ...    "RecordSeq" : 0,
+    ...    "Limit" : 10,
+    ...    "OrderBy" : "updatetime"
+    ...    }
+    log    Query_Forbid_Record_List
+    ${RecordSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    RecordSeq=${RecordSeq}    Limit=${Limit}    OrderBy=updatetime
+    ${res1}    Post Data    ${URL}    v1/im/query_forbid_record_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+RecordSeq为空
+    log    Query_Forbid_Record_List
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    RecordSeq=    Limit=${Limit}    OrderBy=updatetime
+    ${res1}    Post Data    ${URL}    v1/im/query_forbid_record_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit为空
+    log    Query_Forbid_Record_List
+    ${RecordSeq}    Convert To Integer    0
+    ${data}    Create Dictionary    RecordSeq=${RecordSeq}    Limit=    OrderBy=updatetime
+    ${res1}    Post Data    ${URL}    v1/im/query_forbid_record_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+OrderBy为空
+    log    Query_Forbid_Record_List
+    ${RecordSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    RecordSeq=${RecordSeq}    Limit=${Limit}    OrderBy=
+    ${res1}    Post Data    ${URL}    v1/im/query_forbid_record_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+body为空
+    log    Query_Forbid_Record_List
+    ${RecordSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/query_forbid_record_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+limit条数大于100
+    log    Query_Forbid_Record_List
+    ${RecordSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    101
+    ${data}    Create Dictionary    RecordSeq=${RecordSeq}    Limit=${Limit}    OrderBy=updatetime
+    ${res1}    Post Data    ${URL}    v1/im/query_forbid_record_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+limit条数小于0
+    log    Query_Forbid_Record_List
+    ${RecordSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    -1
+    ${data}    Create Dictionary    RecordSeq=${RecordSeq}    Limit=${Limit}    OrderBy=updatetime
+    ${res1}    Post Data    ${URL}    v1/im/query_forbid_record_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+limit条数等于0
+    log    Query_Forbid_Record_List
+    ${RecordSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    0
+    ${data}    Create Dictionary    RecordSeq=${RecordSeq}    Limit=${Limit}    OrderBy=updatetime
+    ${res1}    Post Data    ${URL}    v1/im/query_forbid_record_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0

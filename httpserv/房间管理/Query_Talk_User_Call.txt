@@ -1,0 +1,119 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               "AppID": \ 游戏ID，整数，必选字段
+...
+...               "UserID": \ 游戏用户ID，字符串，必选字段
+...
+...               "QueryDate": 查询日期，整数，格式为YYYYMMDD，必选字段
+...
+...               "StartSeq": 起始序号，整数，默认是0，可选字段
+...
+...               "Limit": \ 一次限制返回的条数，整数，默认1，最大100，可选字段
+...
+...
+...               {
+...               "AppID": 1000,
+...               "UserID": "u#123",
+...               "QueryDate": 20171124,
+...               "StartSeq": 0,
+...               "Limit": 10
+...               }
+Force Tags        Query_Talk_User_Call
+Default Tags      Call
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+查询指定游戏的Talk用户的通话记录
+    [Documentation]    body:
+    ...
+    ...    {
+    ...    "AppID": 1000,
+    ...    "UserID": "u#123",
+    ...    "QueryDate": 20171124,
+    ...    "StartSeq": 0,
+    ...    "Limit": 10
+    ...    }
+    [Tags]    smoke
+    log    Query_Talk_User_Call
+    ${AppID}    Convert To Integer    345
+    ${QueryDate}    Convert To Integer    20180523
+    ${StartSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    AppID=${AppID}    UserID=u#123    QueryDate=${QueryDate}    StartSeq=${StartSeq}    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/query_talk_user_call    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+AppID为空
+    log    Query_Talk_User_Call
+    #${AppID}    Convert To Integer    345
+    ${QueryDate}    Convert To Integer    20180523
+    ${StartSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    AppID=    UserID=u#123    QueryDate=${QueryDate}    StartSeq=${StartSeq}
+    ${res1}    Post Data    ${URL}    v1/im/query_talk_user_call    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+UserID为空
+    log    Query_Talk_User_Call
+    ${AppID}    Convert To Integer    345
+    ${QueryDate}    Convert To Integer    20180523
+    ${StartSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    AppID=${AppID}    UserID=    QueryDate=${QueryDate}    StartSeq=${StartSeq}
+    ${res1}    Post Data    ${URL}    v1/im/query_talk_user_call    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+QueryDate为空
+    log    Query_Talk_User_Call
+    ${AppID}    Convert To Integer    345
+    #${QueryDate}    Convert To Integer    20180523
+    ${StartSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    AppID=${AppID}    UserID=u#123    QueryDate=    StartSeq=${StartSeq}
+    ${res1}    Post Data    ${URL}    v1/im/query_talk_user_call    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+StartSeq为空
+    log    Query_Talk_User_Call
+    ${AppID}    Convert To Integer    345
+    ${QueryDate}    Convert To Integer    20180523
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    AppID=${AppID}    UserID=u#123    QueryDate=${QueryDate}    StartSeq=
+    ${res1}    Post Data    ${URL}    v1/im/query_talk_user_call    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit为空
+    log    Query_Talk_User_Call
+    ${AppID}    Convert To Integer    345
+    ${QueryDate}    Convert To Integer    20180523
+    ${StartSeq}    Convert To Integer    0
+    #${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    AppID=${AppID}    UserID=u#123    QueryDate=${QueryDate}    StartSeq=${StartSeq}    Limit=
+    ${res1}    Post Data    ${URL}    v1/im/query_talk_user_call    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+body为空
+    log    Query_Talk_User_Call
+    #${AppID}    Convert To Integer    345
+    #${QueryDate}    Convert To Integer    20180523
+    #${StartSeq}    Convert To Integer    0
+    #${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/query_talk_user_call    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70041

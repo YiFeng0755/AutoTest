@@ -1,0 +1,30 @@
+1532942803061	geckodriver	INFO	geckodriver 0.19.0
+1532942803069	geckodriver	INFO	Listening on 127.0.0.1:64361
+1532942806123	mozrunner::runner	INFO	Running command: "C:\\Program Files\\Mozilla Firefox\\firefox.exe" "-marionette" "-profile" "C:\\Users\\youme\\AppData\\Local\\Temp\\rust_mozprofile.OV8Ekl6SYifs"
+Unable to read VR Path Registry from C:\Users\youme\AppData\Local\openvr\openvrpaths.vrpath
+Unable to read VR Path Registry from C:\Users\youme\AppData\Local\openvr\openvrpaths.vrpath
+Unable to read VR Path Registry from C:\Users\youme\AppData\Local\openvr\openvrpaths.vrpath
+Unable to read VR Path Registry from C:\Users\youme\AppData\Local\openvr\openvrpaths.vrpath
+Unable to read VR Path Registry from C:\Users\youme\AppData\Local\openvr\openvrpaths.vrpath
+1532942807853	Marionette	INFO	Listening on port 64369
+1532942808143	Marionette	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: https://console.youme.im/static/js/lib/require-2.1.16.min.js, line 8: Error: Script error for: pages/default_main
+http://requirejs.org/docs/errors.html#scripterror
+JavaScript error: https://console.youme.im/static/js/lib/require-2.1.16.min.js, line 8: Error: Script error for: helper/utils
+http://requirejs.org/docs/errors.html#scripterror
+JavaScript warning: https://console.youme.im/static/plugins/daterangepicker/moment.min.js?_t=1532942815470, line 6: unreachable code after return statement
+[Parent 7936, Gecko_IOThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 346
+[Parent 7936, Gecko_IOThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 346
+[Child 15020, Chrome_ChildThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, l[Child 4740, Chrome_ChildThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 346
+[Child 4740, Chine 346
+[Child 15020, Chrome_ChildThread[Parent 7936, Gecko_IOThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 346
+*** UTM:SVC TimerManager:registerTimer called after profile-before-change notification. Ignoring timer registration for id: telemetry_modules_ping
+
+###!!! [Child][MessageChannel::SendAndWait] Error: Channel error: cannot send/recv
+
+vaScript warning: http://t.console.nxit.us/static/plugins/daterangepicker/moment.min.js?_t=1532592148348, line 6: unreachable code after return statement
+JavaScript warning: http://t.console.nxit.us/static/plugins/daterangepicker/moment.min.js?_t=1532592150351, line 6: unreachable code after return statement
+JavaScript warning: http://t.console.nxit.us/static/plugins/daterangepicker/moment.min.js?_t=1532592153957, line 6: unreachable code after return statement
+[Parent 3508, Gecko_IOThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 346
+[Child 14052, Chrome_ChildThread] WARNING: pipe error: 109: file z:/build/build/src/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 346
+c/ipc/chromium/src/chrome/common/ipc_channel_win.cc, line 346

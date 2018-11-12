@@ -1,0 +1,50 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               "AppID" \ \ : \ \ \ 游戏ID，整数，必选字段
+...
+...
+...               {
+...               "AppID": 1000
+...               }
+Force Tags        Get_Talk_Channel_List
+Default Tags      talk
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+查询游戏的Talk频道列表
+    [Documentation]    {
+    ...    \ \ "AppID": 1000
+    ...    }
+    [Tags]    smoke
+    log    get_talk_channel_list
+    ${AppID}    Convert To Integer    345
+    ${data}    Create Dictionary    AppID=${AppID}
+    ${res1}    Post Data    ${URL}    v1/im/get_talk_channel_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    Total    217
+    ${value}    Get From Dictionary    ${res1}    ChannelList
+
+AppID为空
+    log    Get_Talk_Channel_List
+    ${data}    Create Dictionary    AppID=
+    ${res1}    Post Data    ${URL}    v1/im/get_talk_channel_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+body为空
+    log    Get_Talk_Channel_List
+    #${AppID}    Convert To Bytes    @#$123abc
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/get_talk_channel_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70041

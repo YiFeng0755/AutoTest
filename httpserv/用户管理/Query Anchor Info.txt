@@ -1,0 +1,77 @@
+*** Settings ***
+Documentation     查询主播基本信息 参数样例：
+...               {
+...               "UserID": "wrqw",
+...               "AnchorID": "juzi"
+...               }
+...
+...               "UserID" \ \ \ ： \ 主播用户游戏ID，app内唯一，字符串
+...               "AnchorID" \ ： \ 主播用户在游密控制台上的登录账号名，字符串
+...
+...               以上两个用户信息至少给定一个
+Force Tags        query_anchor_info
+Default Tags      Info
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeRequestLib.py
+Library           ../lib/YouMeAnchorRankLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+查询主播基本信息
+    [Documentation]    查询主播基本信息
+    ...    {
+    ...    \ "UserID": "wrqw",
+    ...    "AnchorID": "juzi"
+    ...    }
+    [Tags]    Anchor    User    channel    smoke
+    [Timeout]    10 seconds
+    Log    "query_anchor_info"
+    ${data}    Create Dictionary    UserID=pro    AnchorID=youmepro
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_info    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    AnchorID    youmepro
+
+UserID为空
+    Log    "query_anchor_info"
+    ${data}    Create Dictionary    UserID=    AnchorID=youmepro
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_info    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    AnchorID    youmepro
+
+UserID长度为600
+    Log    "query_anchor_info"
+    ${UserID}    Convert To Integer    123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123423456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123445781234567894578457845784578457811258587445877459987745658774595254447896447864444554654889876725542574287586588557727257575758753754675476857656757657612343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234457823435464587658465
+    ${data}    Create Dictionary    AnchorID=youmepro    UserID=${UserID}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_info    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+AnchorID为空
+    Log    "query_anchor_info"
+    ${UserID}    Convert To Bytes    123abc#$%
+    ${data}    Create Dictionary    AnchorID=    UserID=user123
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_info    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70016
+
+AnchorID长度为600字符
+    Log    "query_anchor_info"
+    ${AnchorID}    Convert To Integer    1234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234457812345678945784578457845784578112585874458774599877456587745952544478964478644445546548898767255425742875865885577272575757587537546754768576567576576123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212344578
+    ${data}    Create Dictionary    UserID=pro    AnchorID=${AnchorID}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_info    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+body为空
+    Log    "query_anchor_info"
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_info    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70006

@@ -1,0 +1,351 @@
+*** Settings ***
+Documentation     body为json格式，包含Notice字段，见body实例，Notice里的各个字段解释如下：
+...
+...               "NoticeID" \ 公告ID，整数
+...
+...               可选的可修改的字段如下：
+...
+...               "ChannelID" 频道ID，app内唯一，字符串
+...
+...               "Title" \ 公告标题，字符串
+...
+...               "Content" \ 公告内容，字符串
+...
+...               "LinkKeyWords" 链接关键字，字符串
+...
+...               "LinkAddr" 链接地址，字符串
+...
+...               "EnableStatus" 公告启用状态，1为停用，2为启用，整数
+...
+...               "Updator" \ 公告修改人，字符串
+...
+...               "LoopType" 公告循环类型，1为一次性公告，2为周期性公告，整数
+...
+...               "SendStartTime" 公告发送时间，格式为HH:MM:SS，字符串
+...
+...               body实例
+...               {
+...               "Notice":
+...               {
+...               "NoticeID": 1,
+...
+...               "ChannelID": "channel12345",
+...               "Title": "title12345",
+...               "Content": "content12345",
+...               "LinkKeyWords": "keywords12345",
+...               "LinkAddr": "address12345",
+...
+...               "LoopType": 1,
+...               "SendDate": "20170502",
+...               "SendStartTime": "16:00:00",
+...               "SendTimes": 3,
+...               "SendInterval": 30,
+...
+...               "EnableStatus": 2,
+...               "Updator": "test"
+...               }
+...               }
+Force Tags        Update_Notice
+Default Tags      notice
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeRequestLib.py
+Library           ../lib/YouMeAnchorRankLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+修改公告
+    [Documentation]    body为json格式，包含Notice字段，见body实例，Notice里的各个字段解释如下：
+    ...    "NoticeID" 公告ID，整数
+    ...
+    ...    可选的可修改的字段如下：
+    ...
+    ...    "ChannelID" 频道ID，app内唯一，字符串
+    ...
+    ...    "Title" \ 公告标题，字符串
+    ...
+    ...    "Content" \ 公告内容，字符串
+    ...
+    ...    "LinkKeyWords" 链接关键字，字符串
+    ...
+    ...    "LinkAddr" 链接地址，字符串
+    ...
+    ...    "EnableStatus" 公告启用状态，1为停用，2为启用，整数
+    ...
+    ...    "Updator" \ 公告修改人，字符串
+    ...
+    ...    "LoopType" 公告循环类型，1为一次性公告，2为周期性公告，整数
+    ...
+    ...    "SendStartTime" 公告发送时间，格式为HH:MM:SS，字符串
+    ...
+    ...    6.7.5. body实例
+    ...    {
+    ...    "Notice":
+    ...    {
+    ...    "NoticeID": 1,
+    ...
+    ...    "ChannelID": "channel12345",
+    ...    "Title": "title12345",
+    ...    "Content": "content12345",
+    ...    "LinkKeyWords": "keywords12345",
+    ...    "LinkAddr": "address12345",
+    ...
+    ...    "LoopType": 1,
+    ...    "SendDate": "20170502",
+    ...    "SendStartTime": "16:00:00",
+    ...    "SendTimes": 3,
+    ...    "SendInterval": 30,
+    ...
+    ...    "EnableStatus": 2,
+    ...    "Updator": "test"
+    ...    }
+    ...    }
+    [Tags]    smoke
+    log    Update_Notice
+    ${NoticeID}    Convert To Integer    1
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    2
+    ${Notice}    Create Dictionary    NoticeID=${NoticeID}    ChannelID=channel123    Title=title12345    Content=content12345    LinkKeyWords=keywords12345
+    ...    LinkAddr=address12345    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=10:00:00    SendTimes=${SendTimes}    SendInterval=${SendInterval}
+    ...    EnableStatus=${EnableStatus}    Updator=test
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70025
+
+NoticeID为空
+    log    Update_Notice
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    2
+    ${Notice}    Create Dictionary    NoticeID=    ChannelID=channel123    Title=title12345    Content=content12345    LinkKeyWords=keywords12345
+    ...    LinkAddr=address12345    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=10:00:00    SendTimes=${SendTimes}    SendInterval=${SendInterval}
+    ...    EnableStatus=${EnableStatus}    Updator=test
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+ChannelID为空
+    log    Update_Notice
+    ${NoticeID}    Convert To Integer    1
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    2
+    ${Notice}    Create Dictionary    NoticeID=${NoticeID}    ChannelID=    Title=title12345    Content=content12345    LinkKeyWords=keywords12345
+    ...    LinkAddr=address12345    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=10:00:00    SendTimes=${SendTimes}    SendInterval=${SendInterval}
+    ...    EnableStatus=${EnableStatus}    Updator=test
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70025
+
+Title为空
+    log    Update_Notice
+    ${NoticeID}    Convert To Integer    1
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    2
+    ${Notice}    Create Dictionary    NoticeID=${NoticeID}    ChannelID=channel123    Title=    Content=content12345    LinkKeyWords=keywords12345
+    ...    LinkAddr=address12345    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=10:00:00    SendTimes=${SendTimes}    SendInterval=${SendInterval}
+    ...    EnableStatus=${EnableStatus}    Updator=test
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70025
+
+Content为空
+    log    Update_Notice
+    ${NoticeID}    Convert To Integer    1
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    2
+    ${Notice}    Create Dictionary    NoticeID=${NoticeID}    ChannelID=channel123    Title=title12345    Content=    LinkKeyWords=keywords12345
+    ...    LinkAddr=address12345    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=10:00:00    SendTimes=${SendTimes}    SendInterval=${SendInterval}
+    ...    EnableStatus=${EnableStatus}    Updator=test
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70025
+
+LinkKeyWords为空
+    log    Update_Notice
+    ${NoticeID}    Convert To Integer    1
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    2
+    ${Notice}    Create Dictionary    NoticeID=${NoticeID}    ChannelID=channel123    Title=title12345    Content=content12345    LinkKeyWords=
+    ...    LinkAddr=address12345    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=10:00:00    SendTimes=${SendTimes}    SendInterval=${SendInterval}
+    ...    EnableStatus=${EnableStatus}    Updator=test
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70025
+
+LinkAddr为空
+    log    Update_Notice
+    ${NoticeID}    Convert To Integer    1
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    2
+    ${Notice}    Create Dictionary    NoticeID=${NoticeID}    ChannelID=channel123    Title=title12345    Content=content12345    LinkKeyWords=keywords12345
+    ...    LinkAddr=    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=10:00:00    SendTimes=${SendTimes}    SendInterval=${SendInterval}
+    ...    EnableStatus=${EnableStatus}    Updator=test
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70025
+
+EnableStatus为空
+    log    Update_Notice
+    ${NoticeID}    Convert To Integer    1
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    2
+    ${Notice}    Create Dictionary    NoticeID=${NoticeID}    ChannelID=channel123    Title=title12345    Content=content12345    LinkKeyWords=keywords12345
+    ...    LinkAddr=address12345    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=10:00:00    SendTimes=${SendTimes}    SendInterval=${SendInterval}
+    ...    EnableStatus=    Updator=test
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Updator为空
+    log    Update_Notice
+    ${NoticeID}    Convert To Integer    1
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    2
+    ${Notice}    Create Dictionary    NoticeID=${NoticeID}    ChannelID=channel123    Title=title12345    Content=content12345    LinkKeyWords=keywords12345
+    ...    LinkAddr=address12345    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=10:00:00    SendTimes=${SendTimes}    SendInterval=${SendInterval}
+    ...    EnableStatus=${EnableStatus}    Updator=
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70025
+
+LoopType为空
+    log    Update_Notice
+    ${NoticeID}    Convert To Integer    1
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    2
+    ${Notice}    Create Dictionary    NoticeID=${NoticeID}    ChannelID=channel123    Title=title12345    Content=content12345    LinkKeyWords=keywords12345
+    ...    LinkAddr=address12345    LoopType=    SendDate=${SendDate}    SendStartTime=10:00:00    SendTimes=${SendTimes}    SendInterval=${SendInterval}
+    ...    EnableStatus=${EnableStatus}    Updator=test
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+SendStartTime为空
+    log    Update_Notice
+    ${NoticeID}    Convert To Integer    1
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    2
+    ${Notice}    Create Dictionary    NoticeID=${NoticeID}    ChannelID=channel123    Title=title12345    Content=content12345    LinkKeyWords=keywords12345
+    ...    LinkAddr=address12345    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=    SendTimes=${SendTimes}    SendInterval=${SendInterval}
+    ...    EnableStatus=${EnableStatus}    Updator=test
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70025
+
+添加公告，修改公告删除公告
+    log    Update_Notice
+    #添加公告
+    ${EnableStatus}    Convert To Integer    2
+    Add Notice    ${EnableStatus}
+    #修改公告为停用状态
+    ${NoticeID}    Convert To Integer    1
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${EnableStatus}    Convert To Integer    1
+    ${Notice}    Create Dictionary    NoticeID=${NoticeID}    ChannelID=channel12345    Content=content123    LinkKeyWords=keywords12345    LinkAddr=address12345
+    ...    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=16:00:00    SendTimes=${SendTimes}    SendInterval=${SendInterval}    EnableStatus=${EnableStatus}
+    ...    Updator=test
+    ${data}    Create Dictionary    Notice=${Notice}
+    ${res1}    Post Data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70025
+    #查询公告
+    ${EnableStatus}    Convert To Integer    1
+    ${NoticeID}    Convert To Integer    1
+    Query Notice    ${EnableStatus}    ${NoticeID}
+
+*** Keywords ***
+Add Notice
+    [Arguments]    ${EnableStatus}
+    [Documentation]    添加公告
+    ...
+    ...    {
+    ...     "Notice":
+    ...     \ \ \ {
+    ...     \ \ \ \ \ \ "ChannelID": "channel12345",
+    ...     \ \ \ \ \ "NoticeType": 2,
+    ...     \ \ \ \ "LoopType": 1,
+    ...     \ \ \
+    ...     \ \ "SendDate": "20170502",
+    ...     \ "SendStartTime": "15:00:00",
+    ...     "SendTimes": 3,
+    ...    "SendInterval": 30,
+    ...
+    ...    "Title": "title12345",
+    ...    "Content": "content12345",
+    ...    "LinkKeyWords": "keywords12345",
+    ...    "LinkAddr": "address12345",
+    ...
+    ...    "EnableStatus": 2,
+    ...    "Creator": "test"
+    ...    }
+    ...    }
+    log    Add_Notice
+    #启用公告
+    ${NoticeType}    Convert To Integer    2
+    ${LoopType}    Convert To Integer    1
+    ${SendDate}    Convert To Integer    20180614
+    ${SendTimes}    Convert To Integer    3
+    ${SendInterval}    Convert To Integer    30
+    ${ChannelID}    Create Dictionary    ChannelID=channel123    NoticeType=${NoticeType}    LoopType=${LoopType}    SendDate=${SendDate}    SendStartTime=15:00:20
+    ...    SendTimes=${SendTimes}    SendInterval=${SendInterval}    Title=title12345    Content=content12345    LinkKeyWords=keywords12345    LinkAddr=address12345
+    ...    EnableStatus=${EnableStatus}    Creator=test
+    ${data}    Create Dictionary    Notice=${ChannelID}
+    ${res1}    Post Data    ${URL}    v1/im/add_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+Query Notice
+    [Arguments]    ${EnableStatus}    ${NoticeID}
+    #查询公告
+    ${data}    Create Dictionary    EnableStatus=${EnableStatus}    NoticeID=${NoticeID}
+    ${res1}    Post Data    ${URL}    v1/im/query_notice    ${data}

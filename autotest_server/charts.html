@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+</head>
+<body>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <ul>
+        {% for item in  items %}
+        <li>{{ escape(item) }}</li>
+        {% end %}
+    </ul>
+    <figure style="width: 400px; height: 300px;" id="myChart"></figure>
+    <script language="JavaScript">
+
+        $.jqPlot("myChart", [[1, 2], [3, 4]], {
+            title: "Cpu",
+            color: "#0000FF"
+        })
+    </script>
+</body>
+</html>

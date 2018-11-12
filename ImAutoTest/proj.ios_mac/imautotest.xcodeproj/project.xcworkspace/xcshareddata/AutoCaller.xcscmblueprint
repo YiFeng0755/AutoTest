@@ -1,0 +1,25 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "fa837761-b011-4839-9757-7ed91606020c++5872",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+    "fa837761-b011-4839-9757-7ed91606020c++5872" : {
+      "DVTSourceControlWorkingCopyRepositoryPrimaryBranchLocationKey" : "client\/av\/SDKTest\/trunk"
+    }
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "fa837761-b011-4839-9757-7ed91606020c++5872" : 9223372036854775807
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "26346C70-33F4-4B2E-BB4F-AAFA27DE47A7",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "fa837761-b011-4839-9757-7ed91606020c++5872" : "trunk\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "AutoCaller",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "AutoTest\/SimpleGameZQ\/proj.ios_mac\/AutoCaller.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "http:\/\/code.nxit.us:9888\/repos\/hellocat",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Subversion",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "fa837761-b011-4839-9757-7ed91606020c++5872"
+    }
+  ]
+}

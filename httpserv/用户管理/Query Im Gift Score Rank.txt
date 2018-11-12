@@ -1,0 +1,431 @@
+*** Settings ***
+Documentation     根据接收礼物的主播用户ID、区服名、频道ID查询满足条件的礼物积分排行榜
+...
+...               body
+...
+...               "StartDate" \ : \ \ 查询起始日期，字符串，格式为YYYYMMDD，可选字段
+...
+...               "EndDate" \ : \ \ 查询结束日期，字符串，格式为YYYYMMDD，可选字段
+...
+...               注：若StartDate和EndDate同时不给定，则查询历史累积至当前自然日期的
+...
+...               "AnchorID" \ : \ \ 收到礼物的主播用户ID，字符串，可选字段
+...
+...               "SvrArea" \ : \ \ 频道所在区服名，字符串，可选字段
+...
+...               "ChannelID" \ : \ \ 频道ID，字符串，可选字段
+...
+...               "OrderBy" \ \ : \ \ 排序字段，1是按礼物积分排序，2是按礼物个数排序，不携带时默认按照礼物积分排序，整数，可选字段
+...
+...               "Limit" \ \ \ : \ \ \ \ 返回排行榜记录的最大条数，默认值50，最大200，整数，可选字段
+...
+...               "NeedFavoriteAnchor" \ \ : \ \ \ \ 是否需要返回排行榜中每个用户对应的送礼物最多的主播信息，1是需要返回，其它值不需要，整数，可选字段
+Force Tags        Query Im Gift Score Rank
+Default Tags      score
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeRequestLib.py
+Library           ../lib/YouMeAnchorRankLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+查询玩家积分排行
+    [Documentation]    query_im_gift_score_rank
+    ...
+    ...    参数用例
+    ...    {"UserID": "5555","Date": "20170725",\ \ \ \ \ \ \ \ "Summary": 1, \ \ \ \ \ \ \ "SvrArea": "", \ \ \ \ \ \ "Limit": 10, \ \ \ \ \ "NeedFavoriteAnchor":1}
+    [Tags]    User    smoke
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Key    ${res1}    RankCount
+
+StartDate为空
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Key    ${res1}    RankCount
+
+StartDate长度多于日期长度
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${data}    Create Dictionary    StartDate=2018043020    EndDate=20180502    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70032
+
+StartDate长度少于日期长度
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${data}    Create Dictionary    StartDate=201804    EndDate=20180502    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70013
+
+EndDate为空
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=20180430    EndDate=    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70032
+
+AnchorID为空
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Key    ${res1}    RankCount
+
+SvrArea为空
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To Bytes    123abc@#$
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Key    ${res1}    RankCount
+
+SvrArea长度大于300
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    12345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212342345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212344578
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+ChannelID为空
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Bytes    123abc$%^
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Key    ${res1}    RankCount
+
+ChannelID长度超过500
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChannelID}    Convert To Integer    1234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234457812345678945784578457845784578112585874458774599877456587745952544478964478644445546548898767255425742875865885577272575757587537546754768576567576576123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212344578
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChannelID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+OrderBy按礼物积分排序
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Key    ${res1}    RankCount
+
+OrderBy按礼物个数排序
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    2
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus     OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Key    ${res1}    RankCount
+
+OrderBy为空
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+OrderBy长度超过300以上
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234457812345678945784578457845784578112585874458774599877456587745952544478964478644445546548898767255425742875865885577272575757587537546754768576567576576123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212341234567890123432123412345678901234321234123456789012343212344578
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=哇哈哈abc    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit大于最大值
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Bytes    123abc
+    ${Limit}    Convert To Integer    201
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit等于最大值
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Bytes    123abc
+    ${Limit}    Convert To Integer    200
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit小于最大值
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Bytes    123abc
+    ${Limit}    Convert To Integer    100
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit值为空
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+NeedFavoriteAnchor为1
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    50
+    ${NeedFavoriteAnchor}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Key    ${res1}    RankCount
+
+NeedFavoriteAnchor为2
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    50
+    ${NeedFavoriteAnchor}    Convert To Integer    2
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Key    ${res1}    RankCount
+
+NeedFavoriteAnchor为其他值
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    50
+    ${NeedFavoriteAnchor}    Convert To Integer    100
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Key    ${res1}    RankCount
+
+NeedFavoriteAnchor为空
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    50
+    ${NeedFavoriteAnchor}    Convert To Integer    100
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+NeedFavoriteAnchor为负数
+    #查询玩家积分排行_body参数均有效
+    Log    query_im_gift_score_rank
+    ${AnchorID}    Convert To String    abc123
+    ${SvrArea}    Convert To Integer    110
+    ${ChanneIID}    Convert To Integer    123
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    50
+    ${NeedFavoriteAnchor}    Convert To Integer    -100
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    AnchorID=${AnchorID}    SvrArea=${SvrArea}    ChannelID=${ChanneIID}
+    ...    OrderBy=${OrderBy}    Limit=${Limit}    NeedFavoriteAnchor=${NeedFavoriteAnchor}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001

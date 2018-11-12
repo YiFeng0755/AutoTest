@@ -1,0 +1,12 @@
+﻿ <dict>  
+     <key>start</key>  
+     <string>开始测试</string>  
+     <key>recoder</key>  
+     <string>录音</string>  
+     <key>location</key>  
+     <string>查看地理位置</string> 
+	 <key>reportdir</key>
+	 <string>测试报告目录</string>
+	 <key>sendmail</key>
+	 <string>发送报告邮件</string>
+ </dict>  

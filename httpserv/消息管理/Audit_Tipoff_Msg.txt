@@ -1,0 +1,101 @@
+*** Settings ***
+Documentation     body
+...
+...               body为json格式，各个字段解释如下：
+...
+...               "MsgID" \ \ \ 举报消息ID，由查询举报消息接口获取，整型
+...
+...               "SendID" \ \ \ 发送用户ID
+...
+...               "RecvID" \ \ \ 接收用户ID
+...
+...               "Strategy" \ \ \ 处理策略，“ignore”：忽略；“warn”：警告；“forbid”：禁言
+...
+...               "Comment" \ \ \ 可选字段，附带处理策略信息描述
+...
+...
+...               body实例
+...               {
+...               "MsgID" : 76360433937952770,
+...               "SendID" : "abcd",
+...               "RecvID" : "bbb",
+...               "Strategy": "ignore"
+...               }
+Force Tags        Audit_Tipoff_Msg
+Default Tags      Tipoff
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+审核举报消息
+    [Documentation]    body实例
+    ...
+    ...    {
+    ...    "MsgID" : 76360433937952770,
+    ...    "SendID" : "abcd",
+    ...    "RecvID" : "bbb",
+    ...    "Strategy": "ignore"
+    ...    }
+    [Tags]    smoke
+    log    Audit_Tipoff_Msg
+    ${MsgID}    Convert To Integer    76360433937952770
+    ${data}    Create Dictionary    MsgID=${MsgID}    SendID=abcd    RecvID=bbb    Strategy=ignore
+    ${res1}    Post Data    ${URL}    v1/im/audit_tipoff_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+MsgID为空
+    log    Audit_Tipoff_Msg
+    ${MsgID}    Convert To Integer    76360433937952770
+    ${data}    Create Dictionary    MsgID=    SendID=abcd    RecvID=bbb    Strategy=ignore
+    ${res1}    Post Data    ${URL}    v1/im/audit_tipoff_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70031
+
+SendID为空
+    log    Audit_Tipoff_Msg
+    ${MsgID}    Convert To Integer    76360433937952770
+    ${data}    Create Dictionary    MsgID=${MsgID}    SendID=    RecvID=bbb    Strategy=ignore
+    ${res1}    Post Data    ${URL}    v1/im/audit_tipoff_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70011
+
+RecvID为空
+    log    Audit_Tipoff_Msg
+    ${MsgID}    Convert To Integer    76360433937952770
+    ${data}    Create Dictionary    MsgID=${MsgID}    SendID=abcd    RecvID=    Strategy=ignore
+    ${res1}    Post Data    ${URL}    v1/im/audit_tipoff_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70012
+
+Strategy为空
+    log    Audit_Tipoff_Msg
+    ${MsgID}    Convert To Integer    76360433937952770
+    ${data}    Create Dictionary    MsgID=${MsgID}    SendID=abcd    RecvID=bbb    Strategy=
+    ${res1}    Post Data    ${URL}    v1/im/audit_tipoff_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70030
+
+Strategy为各种类型组合
+    log    Audit_Tipoff_Msg
+    ${MsgID}    Convert To Integer    76360433937952770
+    ${Strategy}    Convert To Bytes    123ase@#$
+    ${data}    Create Dictionary    MsgID=${MsgID}    SendID=abcd    RecvID=bbb    Strategy=${Strategy}
+    ${res1}    Post Data    ${URL}    v1/im/audit_tipoff_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70030
+
+body为空
+    log    Audit_Tipoff_Msg
+    #${MsgID}    Convert To Integer    76360433937952770
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/audit_tipoff_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70030

@@ -1,0 +1,41 @@
+*** Settings ***
+Library           lib/YouMeRequestLib.py
+Library           RequestsLibrary
+Library           Collections
+
+*** Variables ***
+${URL}            http://api.youme.im/
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958
+
+*** Test Cases ***
+获取房间列表
+    [Documentation]    房间列表
+    [Tags]    Channel
+    Log    get_room_list
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/get_room_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Key    ${res1}    room_list
+    Dictionary should contain Key    ${res1}    room_cnt
+
+获取talk频道内的在线人数
+    [Tags]    channel
+    Log    get_room_list
+    ${data}    Create Dictionary    ChannelID=2012418
+    ${res1}    Post Data    ${URL}    v1/im/query_talk_channel_user_count    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Key    ${res1}    UserCount
+    Dictionary should contain Key    ${res1}    ChannelID
+
+请求加入频道
+    Log    query_im_enter_channel
+    ${data}    Create Dictionary    UserID=Robot0001    ChannelID=2019999
+    ${res1}    Post Data    ${URL}    v1/im/query_im_enter_channel    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+请求退出频道
+    Log    query_im_leave_channel
+    ${data}    Create Dictionary    UserID=Robot0001    ChannelID=2019999
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK

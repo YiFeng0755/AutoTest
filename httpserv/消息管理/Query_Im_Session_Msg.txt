@@ -1,0 +1,213 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               "SendID" \ \ \ \ \ \ \ \ 发送用户ID，app内唯一，字符串
+...
+...               "RecvID" \ \ \ \ \ \ \ \ 接收用户ID，app内唯一，字符串
+...
+...               "MsgSeq" \ \ \ \ \ \ \ \ 消息序号，通常用于分页查询
+...
+...               "Limit" \ \ \ \ \ \ \ \ 本次查询的消息条数上限(最多100条)，小于等于0或者大于100会提示参数错误，整型
+...
+...               "BeginTime" \ \ \ \ \ 开始时间，时间戳秒数，整型
+...
+...               "EndTime" \ \ \ \ \ \ 结束时间，时间戳秒数，整型
+...
+...               "Reverse" \ \ \ \ \ \ \ \ 1按时间降序排列，0按时间正序排列，默认按降序排列。整型，可选字段
+...
+...
+...               body实例
+...
+...               {
+...               "SendID": "528",
+...               "RecvID": "526",
+...               "MsgSeq": 0,
+...               "Limit": 3,
+...               "BeginTime": 1487931492,
+...               "EndTime": 1488009600,
+...               "Reverse": 1
+...               }
+Force Tags        Query_Im_Session_Msg
+Default Tags      msg
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+发消息查询用户会话消息
+    [Tags]    smoke
+    log    Query_Im_Session_Msg
+    Send Msg    user898    user241
+    sleep    350
+    ${BeginTime}    Convert To Integer    1528855200
+    ${EndTime}    Convert To Integer    1528902000
+    ${MsgSeq}    Convert To Integer    0
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=user898    RecvID=user241    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}
+    ...    EndTime=${EndTime}    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    OK
+    Dictionary Should Contain Key    ${res1}    msg_list
+    Dictionary Should Contain Key    ${res1}    ErrorCode    0
+
+时间跨度超过一天
+    log    Query_Im_Session_Msg
+    ${BeginTime}    Convert To Integer    1528729200
+    ${EndTime}    Convert To Integer    1528902000
+    ${MsgSeq}    Convert To Integer    0
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=user898    RecvID=user241    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}
+    ...    EndTime=${EndTime}    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    OK
+    Dictionary Should Contain Item    ${res1}    ErrorCode    0
+
+消息条数大于100
+    log    Query_Im_Session_Msg
+    ${BeginTime}    Convert To Integer    1528855200
+    ${EndTime}    Convert To Integer    1528902000
+    ${MsgSeq}    Convert To Integer    101
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=user898    RecvID=user241    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}
+    ...    EndTime=${EndTime}    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary Should Contain Item    ${res1}    ErrorCode    -1
+
+消息条数小于0
+    ${BeginTime}    Convert To Integer    1528855200
+    ${EndTime}    Convert To Integer    1528902000
+    ${MsgSeq}    Convert To Integer    -5
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=user898    RecvID=user241    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}
+    ...    EndTime=${EndTime}    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary Should Contain Item    ${res1}    ErrorCode    70001
+
+结束时间早于开始时间
+    ${BeginTime}    Convert To Integer    1528902000
+    ${EndTime}    Convert To Integer    1528729200
+    ${MsgSeq}    Convert To Integer    0
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=user898    RecvID=user241    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}
+    ...    EndTime=${EndTime}    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary Should Contain Item    ${res1}    ErrorCode    70008
+
+SendID为空
+    ${BeginTime}    Convert To Integer    1528855200
+    ${EndTime}    Convert To Integer    1528902000
+    ${MsgSeq}    Convert To Integer    0
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=    RecvID=user241    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}
+    ...    EndTime=${EndTime}    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary Should Contain Item    ${res1}    ErrorCode    70011
+
+RecvID为空
+    ${BeginTime}    Convert To Integer    1528855200
+    ${EndTime}    Convert To Integer    1528902000
+    ${MsgSeq}    Convert To Integer    0
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=user898    RecvID=    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}
+    ...    EndTime=${EndTime}    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary Should Contain Item    ${res1}    ErrorCode    70012
+
+MsgSeq为空
+    ${BeginTime}    Convert To Integer    1528855200
+    ${EndTime}    Convert To Integer    1528902000
+    ${MsgSeq}    Convert To Integer    0
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=user898    RecvID=user241    MsgSeq=    Limit=${Limit}    BeginTime=${BeginTime}
+    ...    EndTime=${EndTime}    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary Should Contain Item    ${res1}    ErrorCode    70001
+
+Limit为空
+    ${BeginTime}    Convert To Integer    1528855200
+    ${EndTime}    Convert To Integer    1528902000
+    ${MsgSeq}    Convert To Integer    0
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=user898    RecvID=user241    MsgSeq=${MsgSeq}    Limit=    BeginTime=${BeginTime}
+    ...    EndTime=${EndTime}    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary Should Contain Item    ${res1}    ErrorCode    70001
+
+BeginTime为空
+    ${BeginTime}    Convert To Integer    1528855200
+    ${EndTime}    Convert To Integer    1528902000
+    ${MsgSeq}    Convert To Integer    0
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=user898    RecvID=user241    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=
+    ...    EndTime=${EndTime}    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary Should Contain Item    ${res1}    ErrorCode    70001
+
+EndTime为空
+    ${BeginTime}    Convert To Integer    1528855200
+    ${EndTime}    Convert To Integer    1528902000
+    ${MsgSeq}    Convert To Integer    0
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=user898    RecvID=user241    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}
+    ...    EndTime=    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary Should Contain Item    ${res1}    ErrorCode    70001
+
+Reverse为空
+    ${BeginTime}    Convert To Integer    1528855200
+    ${EndTime}    Convert To Integer    1528902000
+    ${MsgSeq}    Convert To Integer    0
+    ${Reverse}    Convert To Integer    1
+    ${Limit}    Convert To Integer    3
+    ${data}    Create Dictionary    SendID=user898    RecvID=user241    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}
+    ...    EndTime=${EndTime}    Reverse=
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+    Dictionary Should Contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary Should Contain Item    ${res1}    ErrorCode    70001
+
+*** Keywords ***
+Send Msg
+    [Arguments]    ${SendID}    ${RecvID}
+    [Documentation]    接口名称 query_im_send_msg
+    ...
+    ...    body实例
+    ...
+    ...    {
+    ...    "SendID": "528",
+    ...    "RecvID": "526",
+    ...    "MsgSeq": 0,
+    ...    "Limit": 3,
+    ...    "BeginTime": 1487931492,
+    ...    "EndTime": 1488009600,
+    ...    "Reverse": 1
+    ...    }
+    ${MsgSeq}    Convert To Integer    99807732
+    ${ChatType}    Convert To Integer    1
+    ${data}    Create Dictionary    MsgSeq=${MsgSeq}    ChatType=${ChatType}    SendID=${SendID}    RecvID=${RecvID}    Content=fokmrtyuh
+    ${res1}    Post Data    ${URL}    v1/im/query_im_send_msg    ${data}

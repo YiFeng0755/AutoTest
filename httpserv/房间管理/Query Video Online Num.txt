@@ -1,0 +1,140 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               "AppID " \ \ \ \ \ \ \ \ : \ \ \ \ 游戏ID，整数，必选字段
+...
+...               "BeginTime" \ \ \ : \ \ \ \ 起始时间，整数，格式为UTC时间戳，必选字段，若给0则为当前时间戳
+...
+...               "EndTime" \ \ \ \ \ : \ \ \ \ 结束时间，整数，格式为UTC时间戳，必选字段，若给0则为当前时间戳，结束时间和开始时间跨度不能超过30天
+...
+...               "Limit" \ \ \ \ \ \ \ \ \ \ : 一次限制返回的条数，整数，默认1，最大50，可选字段
+Force Tags        Query Video Online Num
+Default Tags      Online
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+查询游戏的视频在线
+    [Documentation]    body实例
+    ...
+    ...    {
+    ...    "AppID": 1000,
+    ...    "BeginTime": 1511400000,
+    ...    "EndTime": 0,
+    ...    "Limit": 10
+    ...    }
+    log    Query Video Online Num
+    ${AppID}    Convert To Integer    345
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    AppID=${AppID}    BeginTime=${BeginTime}    EndTime=${EndTime}    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/query_video_online_num    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+AppID为空
+    log    Query Video Online Num
+    #${AppID}    Convert To Integer    345
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    AppID=    BeginTime=${BeginTime}    EndTime=${EndTime}    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/query_video_online_num    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+BeginTime为空
+    log    Query Video Online Num
+    ${AppID}    Convert To Bytes    @#$123abc
+    #${BeginTime}    Convert To Integer    1526977606
+    ${EndTime}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    AppID=${AppID}    BeginTime=    EndTime=${EndTime}    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/query_video_online_num    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+EndTime为空
+    log    Query Video Online Num
+    ${AppID}    Convert To Integer    345
+    ${BeginTime}    Get Before Time
+    #${EndTime}    Get Now Time    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    AppID=${AppID}    BeginTime=${BeginTime}    EndTime=    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/query_video_online_num    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit为空
+    log    Query Video Online Num
+    ${AppID}    Convert To Integer    345
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    #${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    AppID=${AppID}    BeginTime=${BeginTime}    EndTime=${EndTime}    Limit=
+    ${res1}    Post Data    ${URL}    v1/im/query_video_online_num    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit大于最大值50
+    log    Query Video Online Num
+    ${AppID}    Convert To Integer    345
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${Limit}    Convert To Integer    60
+    ${data}    Create Dictionary    AppID=${AppID}    BeginTime=${BeginTime}    EndTime=${EndTime}    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/query_video_online_num    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+Limit为最大值50
+    log    Query Video Online Num
+    ${AppID}    Convert To Integer    345
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${Limit}    Convert To Integer    50
+    ${data}    Create Dictionary    AppID=${AppID}    BeginTime=${BeginTime}    EndTime=${EndTime}    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/query_video_online_num    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+body为空
+    log    Query Video Online Num
+    #${AppID}    Convert To Integer    345
+    #${BeginTime}    Convert To Integer    1526977606
+    #${EndTime}    Convert To Integer    0
+    #${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/query_video_online_num    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70041
+
+结束时间早于开始时间
+    log    Query Video Online Num
+    ${AppID}    Convert To Integer    345
+    ${BeginTime}    Convert To Integer    1528360277
+    ${EndTime}    Convert To Integer    1528356628
+    ${Limit}    Convert To Integer    50
+    ${data}    Create Dictionary    AppID=${AppID}    BeginTime=${BeginTime}    EndTime=${EndTime}    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/query_video_online_num    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70009
+
+结束日期比开始日期大于30天
+    log    Query Video Online Num
+    ${AppID}    Convert To Integer    345
+    ${BeginTime}    Convert To Integer    1525104000
+    ${EndTime}    Convert To Integer    1528356628
+    ${Limit}    Convert To Integer    50
+    ${data}    Create Dictionary    AppID=${AppID}    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ${res1}    Post Data    ${URL}    v1/im/query_video_online_num    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70009

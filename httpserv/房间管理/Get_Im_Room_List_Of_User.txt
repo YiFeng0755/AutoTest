@@ -1,0 +1,139 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               “UserID” \ \ \ 用户名，字符串
+...
+...
+...               {
+...               "UserID":"jason"，
+...               }
+Force Tags        Get_Im_Room_List_Of_User
+Default Tags      list
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeRequestLib.py
+Library           ../lib/YouMeAnchorRankLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+获取IM用户所在房间列表
+    [Documentation]    body实例
+    ...
+    ...    {
+    ...    "UserID":"jason"，
+    ...    }
+    [Tags]    smoke
+    log    get_im_room_list_of_user
+    ${data}    Create Dictionary    UserID=jason
+    ${res1}    Post Data    ${URL}    v1/im/get_im_room_list_of_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID为空
+    log    get_im_room_list_of_user
+    ${data}    Create Dictionary    UserID=
+    ${res1}    Post Data    ${URL}    v1/im/get_im_room_list_of_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+body为空
+    log    get_im_room_list_of_user
+    #${UserID}    Convert To Bytes    @#123abc
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/get_im_room_list_of_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+获取加入两个房间的用户所在房间列表
+    log    get_im_room_list_of_user
+    Join Room    user22    room11
+    ${data}    Create Dictionary    UserID=user22
+    ${res1}    Post Data    ${URL}    v1/im/get_im_room_list_of_user    ${data}
+    Join Room    user22    room22
+    ${data}    Create Dictionary    UserID=user22
+    ${res1}    Post Data    ${URL}    v1/im/get_im_room_list_of_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    room_cnt    2
+    ${value}    Get From Dictionary    ${res1}    room_list
+    ${result}    Get From List    ${value}    0
+    ${result1}    Get From List    ${value}    1
+    Should Be Equal As Strings    ${result}    {u'room_name': u'room11'}
+    Should Be Equal As Strings    ${result1}    {u'room_name': u'room22'}
+
+获取离开其中一个房间的用户的房间列表
+    log    get_im_room_list_of_user
+    Join Room    user22    room11
+    ${data}    Create Dictionary    UserID=user22
+    ${res1}    Post Data    ${URL}    v1/im/get_im_room_list_of_user    ${data}
+    Join Room    user22    room22
+    ${data}    Create Dictionary    UserID=user22
+    ${res1}    Post Data    ${URL}    v1/im/get_im_room_list_of_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    room_cnt    2
+    ${value}    Get From Dictionary    ${res1}    room_list
+    ${result}    Get From List    ${value}    0
+    ${result1}    Get From List    ${value}    1
+    Should Be Equal As Strings    ${result}    {u'room_name': u'room11'}
+    Should Be Equal As Strings    ${result1}    {u'room_name': u'room22'}
+    Leave Room    user22    room11
+    ${data}    Create Dictionary    UserID=user22
+    ${res1}    Post Data    ${URL}    v1/im/get_im_room_list_of_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    room_cnt    1
+    ${value}    Get From Dictionary    ${res1}    room_list
+    ${result}    Get From List    ${value}    0
+    Should Be Equal As Strings    ${result1}    {u'room_name': u'room22'}
+
+获取加入房间离开房间再次加入房间的用户所在房间列表
+    [Documentation]    1，用户先加入一个房间，获取用户所在的房间列表
+    ...
+    ...    2，用户再离开房间，获取用户所在的房间列表
+    ...
+    ...    3，用户再加入一个房间，获取用户所在的房间列表
+    #加入房间
+    Join Room    user101    room222
+    ${data}    Create Dictionary    UserID=user101
+    ${res1}    Post Data    ${URL}    v1/im/get_im_room_list_of_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    room_cnt    1
+    ${value}    Get From Dictionary    ${res1}    room_list
+    ${result}    Get From List    ${value}    0
+    Should Be Equal As Strings    ${result}    {u'room_name': u'room222'}
+    Leave Room1    user101    room222
+    ${res1}    Post Data    ${URL}    v1/im/get_im_room_list_of_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    room_cnt    0
+    Join Room    user101    room222
+    ${res1}    Post Data    ${URL}    v1/im/get_im_room_list_of_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    room_cnt    1
+    ${value}    Get From Dictionary    ${res1}    room_list
+    ${result}    Get From List    ${value}    0
+    Should Be Equal As Strings    ${result}    {u'room_name': u'room222'}
+
+*** Keywords ***
+Join Room
+    [Arguments]    ${userID}    ${ChannelID}
+    ${data}    Create Dictionary    UserID=${UserID}    ChannelID=${ChannelID}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_enter_channel    ${data}
+
+Leave Room
+    [Arguments]    ${userID}    ${ChannelID}
+    Join Room    user22    room11
+    ${data}    Create Dictionary    UserID=user22    ChannelID=room11
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
+
+Leave Room1
+    [Arguments]    ${UserID}    ${ChannelID}
+    ${data}    Create Dictionary    UserID=${UserID}    ChannelID=${ChannelID}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}

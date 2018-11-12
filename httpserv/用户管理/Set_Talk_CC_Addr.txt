@@ -1,0 +1,83 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...               "AppID" \ \ \ \ \ : 游戏ID，整数，必选字段
+...
+...               "CCAddr" \ \ \ \ : \ \ \ \ \ \ \ \ \ 抄送地址，字符串，必选字段
+...
+...               "CCType" \ \ \ \ : 需要接收的抄送消息类型，字符串，必选字段，以英文逗号间隔，类型取以下值：
+...               用户行为 抄送消息类型
+...               加入频道 1
+...               退出频道 2
+...               会话超时 3
+...               被踢出 4
+...               打开麦克风 5
+...               关闭麦克风 6
+...               打开摄像头 7
+...               关闭摄像头 8
+...               身份切换 9
+...
+...               触发了抄送消息后，发给指定抄送地址的消息格式为json格式，各个字段解释如下：
+...
+...               "userid" \ \ \ \ \ \ \ : \ \ \ \ 用户ID，字符串
+...
+...               "channelid" \ \ : \ \ \ \ 用户所在频道ID，字符串
+...
+...               "identity" \ \ \ \ : 用户身份，整数，取值为0（暂未设置身份）、1（自由讲话者）、2（抢麦用户）、3（听众）、4（指挥）、5（主播）、6（嘉宾），身份信息可以在加入频道时传入，或者中途调用SDK切换
+...
+...               "app_id" \ \ \ \ \ : 游戏ID，整数
+...
+...               "event_type" \ \ \ \ \ \ \ : \ \ \ \ \ \ 事件类型，整数，即抄送消息类型，取值为上面表格中的枚举值
+...
+...               "event_desc" \ \ \ \ \ \ \ : \ 事件描述，字符串
+...
+...               "time_stamp" \ \ \ \ \ \ \ : \ 事件触发时间戳，整数
+...
+...               "user_count" \ \ \ \ \ \ \ : \ 频道用户数，整数
+...
+...               "platform_type" \ \ \ \ : \ 用户设备平台类型，整数，取值有0（未知平台）、1（安卓平台）、2（iOS平台）、3（Windows平台）、4（OSX平台）、5（Linux平台）
+...
+...               注：user_count和platform_type字段仅在消息类型1、2、3、4时才存在
+Force Tags        Set_Talk_CC_Addr
+Default Tags      addr
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+设置Talk用户行为消息的抄送地址
+    [Tags]    smoke
+    log    Set_Talk_CC_Addr
+    ${AppID}    Convert To Integer    345
+    ${data}    Create Dictionary    AppID=${AppID}    CCAddr=http://10.10.6.56:8998/testfortest    CCType=1,2,3,4,5,6,7,8
+    ${res1}    Post Data    ${URL}    v1/im/set_talk_cc_addr    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+AppID为空
+    log    Set_Talk_CC_Addr
+    ${data}    Create Dictionary    AppID=    CCAddr=http://10.10.6.56:8998/testfortest    CCType=1,2,3,4,5,6,7,8
+    ${res1}    Post Data    ${URL}    v1/im/set_talk_cc_addr    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+CCAddr为空
+    log    Set_Talk_CC_Addr
+    ${AppID}    Convert To Integer    345
+    ${data}    Create Dictionary    AppID=${AppID}    CCAddr=    CCType=1,2,3,4,5,6,7,8
+    ${res1}    Post Data    ${URL}    v1/im/set_talk_cc_addr    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+CCType为空
+    log    Set_Talk_CC_Addr
+    ${AppID}    Convert To Integer    345
+    ${data}    Create Dictionary    AppID=${AppID}    CCAddr=http://10.10.6.56:8998/testfortest    CCType=
+    ${res1}    Post Data    ${URL}    v1/im/set_talk_cc_addr    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0

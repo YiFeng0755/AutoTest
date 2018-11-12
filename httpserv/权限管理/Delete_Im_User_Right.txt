@@ -1,0 +1,143 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               "ChannelID" \ \ \ \ \ \ \ 用户所在频道ID，字符串；
+...
+...               "UserList" \ \ \ \ \ \ \ \ \ \ 用户列表(一次不超过100个用户)，包括以下属性：
+...
+...               "UserID" \ \ \ \ \ \ \ \ \ \ \ 用户ID, app内唯一，字符串；
+...
+...               {
+...               "ChannelID":"channel123",
+...               "UserList":[
+...               {
+...               "UserID":"zhubo",
+...               },
+...               {
+...               "UserID":"test1",
+...               }]
+...               }
+Force Tags        Delete_Im_User_Right
+Default Tags      right
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+删除非频道中用户权限
+    [Documentation]    body实例
+    ...
+    ...    {
+    ...    "ChannelID":"channel123",
+    ...    "UserList":[
+    ...    {
+    ...    "UserID":"zhubo",
+    ...    },
+    ...    {
+    ...    "UserID":"test1",
+    ...    }]
+    ...    }
+    [Tags]    smoke
+    log    Delete_Im_User_Right
+    ${flag}    Create Dictionary    UserID=zhubo    UserID=test1
+    ${UserList}    Create List    ${flag}
+    ${data}    Create Dictionary    ChannelID=channel123    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+ChannelID为空
+    log    Delete_Im_User_Right
+    ${flag}    Create Dictionary    UserID=zhubo    UserID=test1
+    ${UserList}    Create List    ${flag}
+    ${data}    Create Dictionary    ChannelID=    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserList为空
+    log    Delete_Im_User_Right
+    ${flag}    Create Dictionary    UserID=zhubo    UserID=test1
+    ${UserList}    Create List    ${flag}
+    ${data}    Create Dictionary    ChannelID=channel123    UserList=
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70002
+
+UserID为空
+    log    Delete_Im_User_Right
+    ${flag}    Create Dictionary    UserID=
+    ${UserList}    Create List    ${flag}
+    ${data}    Create Dictionary    ChannelID=channel123    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID个数为100
+    log    Delete_Im_User_Right
+    ${num}    Convert To Integer    100
+    ${UserList}    Create Query Im User State N List    ${num}
+    ${data}    Create Dictionary    ChannelID=channel123    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID个数大于100
+    log    Delete_Im_User_Right
+    ${num}    Convert To Integer    101
+    ${UserList}    Create Query Im User State N List    ${num}
+    ${data}    Create Dictionary    ChannelID=channel123    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID个数小于100
+    log    Delete_Im_User_Right
+    ${num}    Convert To Integer    99
+    ${UserList}    Create Query Im User State N List    ${num}
+    ${data}    Create Dictionary    ChannelID=channel123    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+body为空
+    log    Delete_Im_User_Right
+    #${flag}    Create Dictionary    UserID=zhubo    UserID=test1
+    #${UserList}    Create List    ${flag}
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70002
+
+删除加入频道得用户权限
+    log    Delete_Im_User_Right
+    Join Channel    user201    room123
+    ${flag}    Create Dictionary    UserID=user201
+    ${UserList}    Create List    ${flag}
+    ${data}    Create Dictionary    ChannelID=room123    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+删除频道内部分用户权限
+    log    Delete_Im_User_Right
+    Join Channel    user201    room123
+    Join Channel    user203    room123
+    ${flag}    Create Dictionary    UserID=user201
+    ${UserList}    Create List    ${flag}
+    ${data}    Create Dictionary    ChannelID=room123    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+*** Keywords ***
+Join Channel
+    [Arguments]    ${UserID}    ${ChannelID}
+    ${data}    Create Dictionary    UserID=${UserID}    ChannelID=${ChannelID}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_enter_channel    ${data}

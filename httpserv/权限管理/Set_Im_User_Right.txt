@@ -1,0 +1,286 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               "ChannelID" \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 用户所在频道ID，字符串；为“@_all”时代表操作的对象是所有频道（谨慎使用）
+...
+...               "ChannelDescription" \ \ \ \ \ \ \ 用户所在频道描述，字符串
+...
+...               "ShutUpTime" \ \ \ \ \ \ \ \ 可选字段，设置权限生效时间段（单位秒），不设置默认为永久
+...
+...               "UserList" \ \ \ \ \ \ \ \ \ 用户列表(一次不超过100个用户)，包括以下属性：
+...
+...               "UserID" \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 用户ID, app内唯一，字符串；为“@_all”时代表操作的对象是频道中的所有用户，用来设置频道的默认权限
+...
+...               "SendTextRight" \ \ \ \ \ \ \ \ \ 用户在IM聊天频道发送文本权限，整型（0/1）
+...
+...               "SendPictureRight" \ \ \ \ \ \ \ 用户在IM聊天频道发送图片权限，整型（0/1）
+...
+...               "SendVoiceRight" \ \ \ \ \ \ \ \ 用户在IM聊天频道发送语音消息权限，整型（0/1）
+...               注：设置权限，设置的对象是以channel id ＋ user id标记的组合；设置的权限数量不能太多，否则会影响服务器的处理效率
+...
+...               body实例
+...               {
+...               "ChannelID":"channel123",
+...               "ChannelDescription":"ios-1",
+...               "ShutUpTime":259200,
+...               "UserList":[
+...               {
+...               "UserID":"zhubo",
+...               "SendTextRight":1,
+...               "SendPictureRight":1,
+...               "SendVoiceRight":1
+...               },
+...               {
+...               "UserID":"test1",
+...               "SendTextRight":0,
+...               "SendPictureRight":1,
+...               "SendVoiceRight":0
+...               }]
+...               }
+Force Tags        Set_Im_User_Right
+Default Tags      right
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+IM聊天频道设置权限
+    [Documentation]    3.1.5. body实例
+    ...
+    ...    {
+    ...    "ChannelID":"channel123",
+    ...    "ChannelDescription":"ios-1",
+    ...    "ShutUpTime":259200,
+    ...    "UserList":[
+    ...    {
+    ...    "UserID":"zhubo",
+    ...    "SendTextRight":1,
+    ...    "SendPictureRight":1,
+    ...    "SendVoiceRight":1
+    ...    },
+    ...    {
+    ...    "UserID":"test1",
+    ...    "SendTextRight":0,
+    ...    "SendPictureRight":1,
+    ...    "SendVoiceRight":0
+    ...    }]
+    ...    }
+    [Tags]    smoke
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Integer    1
+    ${SendPictureRight}    Convert To Integer    1
+    ${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+ChannelID为空
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Integer    1
+    ${SendPictureRight}    Convert To Integer    1
+    ${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70003
+
+ChannelDescription为空
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Integer    1
+    ${SendPictureRight}    Convert To Integer    1
+    ${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+ShutUpTime为空
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Integer    1
+    ${SendPictureRight}    Convert To Integer    1
+    ${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+ShutUpTime为负数
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Integer    1
+    ${SendPictureRight}    Convert To Integer    1
+    ${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserList为空
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Integer    1
+    ${SendPictureRight}    Convert To Integer    1
+    ${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserList为各种类型组合
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Integer    1
+    ${SendPictureRight}    Convert To Integer    1
+    ${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID用户数量达到100个
+    log    Set_Im_User_Right
+    #${SendTextRight}    Convert To Integer    1
+    #${SendPictureRight}    Convert To Integer    1
+    #${SendVoiceRight}    Convert To Integer    1
+    #${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${num}    Convert To Integer    100
+    ${UserList}    Create User Auth N List    ${num}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID用户数量大于100个
+    log    Set_Im_User_Right
+    #${SendTextRight}    Convert To Integer    1
+    #${SendPictureRight}    Convert To Integer    1
+    #${SendVoiceRight}    Convert To Integer    1
+    #${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${num}    Convert To Integer    101
+    ${UserList}    Create User Auth N List    ${num}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID用户数量小于100个
+    log    Set_Im_User_Right
+    #${SendTextRight}    Convert To Integer    1
+    #${SendPictureRight}    Convert To Integer    1
+    #${SendVoiceRight}    Convert To Integer    1
+    #${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${num}    Convert To Integer    99
+    ${UserList}    Create User Auth N List    ${num}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID为空
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Integer    1
+    ${SendPictureRight}    Convert To Integer    1
+    ${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+SendTextRight为空
+    [Documentation]    用户在IM聊天频道发送文本权限，整型（0/1）
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Integer    1
+    ${SendPictureRight}    Convert To Integer    1
+    ${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+SendTextRight为各种类型组合
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Bytes    @#$%^
+    ${SendPictureRight}    Convert To Integer    1
+    ${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+SendPictureRight为空
+    [Documentation]    用户在IM聊天频道发送图片权限，整型（0/1）
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Integer    1
+    ${SendPictureRight}    Convert To Integer    1
+    ${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=    SendVoiceRight=${SendVoiceRight}
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+SendVoiceRight为空
+    [Documentation]    用户在IM聊天频道发送语音消息权限，整型（0/1）
+    log    Set_Im_User_Right
+    ${SendTextRight}    Convert To Integer    1
+    ${SendPictureRight}    Convert To Integer    1
+    #${SendVoiceRight}    Convert To Integer    1
+    ${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=
+    ${UserList}    Create List    ${UserID}
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=channel123    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+body为空
+    log    Set_Im_User_Right
+    #${SendTextRight}    Convert To Integer    1
+    #${SendPictureRight}    Convert To Integer    1
+    #${SendVoiceRight}    Convert To Integer    1
+    #${UserID}    Create Dictionary    UserID=zhubo    SendTextRight=${SendTextRight}    SendPictureRight=${SendPictureRight}    SendVoiceRight=${SendVoiceRight}
+    #${UserList}    Create List    ${UserID}
+    #${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70002

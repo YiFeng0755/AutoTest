@@ -1,0 +1,249 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               "ChannelID" 频道ID，app内唯一，字符串
+...
+...               "MsgSeq" \ 消息序号，通常用于分页查询
+...
+...               "Limit" \ 本次查询的消息条数上限(最多100条)，小于等于0或者大于100会提示参数错误，整型
+...
+...               "BeginTime" 开始时间，时间戳秒数，整型
+...
+...               "EndTime" 结束时间，时间戳秒数，整型
+...
+...               "Reverse" \ 1按时间降序排列，0按时间正序排列，默认按降序排列。整型，可选字段
+...
+...
+...               {
+...               "ChannelID": "2011234",
+...               "MsgSeq": 0,
+...               "Limit": 3,
+...               "BeginTime": 1487924438,
+...               "EndTime": 1488009600,
+...               "Reverse": 1
+...               }
+Force Tags        Query_Im_Channel_Msg
+Default Tags      channel
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+查询频道消息
+    [Documentation]    body实例
+    ...
+    ...    {
+    ...    "ChannelID": "2011234",
+    ...    "MsgSeq": 0,
+    ...    "Limit": 3,
+    ...    "BeginTime": 1487924438,
+    ...    "EndTime": 1488009600,
+    ...    "Reverse": 1
+    ...    }
+    [Tags]    smoke
+    log    Query_Im_Channel_Msg
+    ${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    1
+    ${BeginTime}    Get Before Time
+    ${Reverse}    Convert To Integer    1
+    Send Message    2017890
+    sleep    305    1
+    ${EndTime}    Get Now Time
+    ${data}    Create Dictionary    ChannelID=2017890    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ...    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary Should Contain Key    ${res1}    msg_cnt
+    Dictionary Should Contain Key    ${res1}    msg_list
+
+ChannelID为空
+    log    Query_Im_Channel_Msg
+    ${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    3
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${Reverse}    Convert To Integer    1
+    ${data}    Create Dictionary    ChannelID=    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ...    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70003
+
+MsgSeq为空
+    log    Query_Im_Channel_Msg
+    #${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    3
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${Reverse}    Convert To Integer    1
+    ${data}    Create Dictionary    ChannelID=2011234    MsgSeq=    Limit=${Limit}    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ...    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit为空
+    log    Query_Im_Channel_Msg
+    ${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    3
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${Reverse}    Convert To Integer    1
+    ${data}    Create Dictionary    ChannelID=2011234    MsgSeq=${MsgSeq}    Limit=    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ...    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+BeginTime为空
+    log    Query_Im_Channel_Msg
+    ${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    3
+    #BeginTime}    Get Before Time    1525921871
+    ${EndTime}    Get Now Time
+    ${Reverse}    Convert To Integer    1
+    ${data}    Create Dictionary    ChannelID=2011234    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=    EndTime=${EndTime}
+    ...    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+EndTime为空
+    log    Query_Im_Channel_Msg
+    ${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    3
+    ${BeginTime}    Get Before Time
+    #EndTime}    Get Now Time
+    ${Reverse}    Convert To Integer    1
+    ${data}    Create Dictionary    ChannelID=2011234    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}    EndTime=
+    ...    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+EndTime格式不正确
+    log    Query_Im_Channel_Msg
+    ${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    3
+    ${BeginTime}    Convert To Integer    1525921871
+    ${EndTime}    Convert To Integer    1526985237
+    ${Reverse}    Convert To Integer    1
+    ${data}    Create Dictionary    ChannelID=2011234    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ...    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+Reverse按时间降序排列
+    [Documentation]    "Reverse" \ \ \ \ 1按时间降序排列，0按时间正序排列，默认按降序排列。整型，可选字段
+    log    Query_Im_Channel_Msg
+    ${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    3
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${Reverse}    Convert To Integer    1
+    ${data}    Create Dictionary    ChannelID=2017890    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ...    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+Reverse按时间正序排列
+    [Documentation]    "Reverse" \ \ \ \ 1按时间降序排列，0按时间正序排列，默认按降序排列。整型，可选字段
+    log    Query_Im_Channel_Msg
+    ${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    3
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${Reverse}    Convert To Integer    1
+    ${data}    Create Dictionary    ChannelID=2017890    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ...    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+Reverse为空
+    log    Query_Im_Channel_Msg
+    Send Message1    2013210
+    ${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    3
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${Reverse}    Convert To Integer    1
+    ${data}    Create Dictionary    ChannelID=2011234    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ...    Reverse=
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Reverse为中英文
+    log    Query_Im_Channel_Msg
+    ${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    3
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${data}    Create Dictionary    ChannelID=2017890    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ...    Reverse=abc123
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+body为空
+    log    Query_Im_Channel_Msg
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70003
+
+查询发送指定房间指定消息条数
+    log    Query_Im_Channel_Msg
+    ${MsgSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    1
+    ${BeginTime}    Get Before Time
+    ${EndTime}    Get Now Time
+    ${Reverse}    Convert To Integer    1
+    Send Message    2017890
+    sleep    305
+    ${data}    Create Dictionary    ChannelID=2017890    MsgSeq=${MsgSeq}    Limit=${Limit}    BeginTime=${BeginTime}    EndTime=${EndTime}
+    ...    Reverse=${Reverse}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    ${value}    Get From Dictionary    ${res1}    msg_list
+
+*** Keywords ***
+Send Message
+    [Arguments]    ${RecvID}
+    ${ChatType}    Convert To Integer    2
+    ${data}    Create Dictionary    MsgSeq=99807732    ChatType=${ChatType}    SendID=abc12    RecvID=${RecvID}    Content=hello abdewq
+    ${res1}    Post Data    ${URL}    v1/im/query_im_send_msg    ${data}
+    ${ChatType}    Convert To Integer    2
+    ${data}    Create Dictionary    MsgSeq=99807732    ChatType=${ChatType}    SendID=abc12    RecvID=${RecvID}    Content=hello 123
+    ${ChatType}    Convert To Integer    2
+    ${res1}    Post Data    ${URL}    v1/im/query_im_send_msg    ${data}
+    ${data}    Create Dictionary    MsgSeq=99807732    ChatType=${ChatType}    SendID=abc12    RecvID=${RecvID}    Content=hello 111
+    ${ChatType}    Convert To Integer    2
+    ${res1}    Post Data    ${URL}    v1/im/query_im_send_msg    ${data}
+    ${data}    Create Dictionary    MsgSeq=99807732    ChatType=${ChatType}    SendID=abc12    RecvID=${RecvID}    Content=hello 256
+    ${ChatType}    Convert To Integer    2
+    ${res1}    Post Data    ${URL}    v1/im/query_im_send_msg    ${data}
+    ${ChatType}    Convert To Integer    2
+    ${data}    Create Dictionary    MsgSeq=99807732    ChatType=${ChatType}    SendID=abc12    RecvID=${RecvID}    Content=hello 555
+    ${ChatType}    Convert To Integer    2
+    ${res1}    Post Data    ${URL}    v1/im/query_im_send_msg    ${data}
+    ${data}    Create Dictionary    MsgSeq=99807732    ChatType=${ChatType}    SendID=abc12    RecvID=${RecvID}    Content=hello 666
+    ${ChatType}    Convert To Integer    2
+    ${res1}    Post Data    ${URL}    v1/im/query_im_send_msg    ${data}
+    ${data}    Create Dictionary    MsgSeq=99807732    ChatType=${ChatType}    SendID=abc12    RecvID=${RecvID}    Content=hello 24677
+
+Send Message1
+    [Arguments]    ${RecvID}
+    ${ChatType}    Convert To Integer    2
+    ${data}    Create Dictionary    MsgSeq=99807732    ChatType=${ChatType}    SendID=abc12    RecvID=${RecvID}    Content=hello abdewq

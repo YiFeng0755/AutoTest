@@ -1,0 +1,116 @@
+*** Settings ***
+Library           lib/YouMeRequestLib.py
+Library           RequestsLibrary
+Library           Collections
+
+*** Variables ***
+${URL}            http://api.youme.im/
+${SECRET}         3hzCOsAPitudP7DiQN7ANrkbnTpEVdm0KJ1fFNmXzwL6BZTfEGwfBU4W2efhnAxkx11idqN60lIJ26KkRhBrBQcgui8SahalzxtVv+hKHvDhg/KTMhmal8tuknnAcxlWkq7102ZG3EM6loBPCMp6t96078W7XCWNoszlzPxT6w0BAAE=
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958
+
+*** Test Cases ***
+IM聊天频道设置权限
+    [Documentation]    {
+    ...    "ChannelID":"channel123",
+    ...    "ChannelDescription":"ios-1",
+    ...    "ShutUpTime":259200,
+    ...    "UserList":[
+    ...    {
+    ...    "UserID":"zhubo",
+    ...    "SendTextRight":1,
+    ...    "SendPictureRight":1,
+    ...    "SendVoiceRight":1
+    ...    },
+    ...    {
+    ...    "UserID":"test1",
+    ...    "SendTextRight":0,
+    ...    "SendPictureRight":1,
+    ...    "SendVoiceRight":0
+    ...    }]
+    ...    }
+    [Tags]    Auth
+    Log    set_im_user_right
+    ${False}    Convert To Integer    0
+    ${True}    Convert To Integer    1
+    ${Shutuptime}    Convert To Integer    25920
+    ${User1}    Create Dictionary    UserID=1234    SendTextRight=${True}    SendPictureRight=${True}    SendVoiceRight=${False}
+    ${User2}    Create Dictionary    UserID=1235    SendTextRight=${False}    SendPictureRight=${False}    SendVoiceRight=${False}
+    ${UserList}    CreateList    ${User1}    ${User2}
+    ${data}    Create Dictionary    ChannelID=2011234    UserList=${UserList}    ChannelDescription=禁言房间测试    ShutUpTime=${Shutuptime}
+    ${res1}    Post Data    ${URL}    v1/im/set_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+IM频道禁言用户
+    [Documentation]    删除封禁
+    [Tags]    Auth
+    Log    delete_im_user_right
+    ${User1}    Create Dictionary    UserID=1234
+    ${User2}    Create Dictionary    UserID=1235
+    ${UserList}    CreateList    ${User1}    ${User2}
+    ${data}    Create Dictionary    UserList=${UserList}    ChannelID=2011234
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+封禁一个聊天频道
+    [Documentation]    封禁聊天频道
+    [Tags]    auth
+    Log    forbid_im_channel_send_msg
+    ${Shutuptime}    Convert To Integer    25920
+    ${data}    Create Dictionary    ChannelID=2011235    ChannelDescription=测试频道描述    ShutUpTime=${Shutuptime}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_channel_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+IM聊天频道删除权限
+    [Documentation]    删除封禁
+    Log    delete_im_user_right
+    ${User1}    Create Dictionary    UserID=1234
+    ${User2}    Create Dictionary    UserID=1235
+    ${UserList}    CreateList    ${User1}    ${User2}
+    ${data}    Create Dictionary    UserList=${UserList}    ChannelID=2011234
+    ${res1}    Post Data    ${URL}    v1/im/delete_im_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+IM所有聊天频道禁言用户
+    [Tags]    Auth
+    Log    forbid_im_user_send_channel_msg
+    ${Shutuptime}    Convert To Integer    25920
+    ${User1}    Create Dictionary    UserID=2234
+    ${User2}    Create Dictionary    UserID=2235
+    ${UserList}    CreateList    ${User1}    ${User2}
+    ${data}    Create Dictionary    UserList=${UserList}    ShutUpTime=${Shutuptime}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_user_send_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+Talk语音频道删除权限
+    [Tags]    Auth
+    Log    delete_talk_user_right
+    ${User1}    Create Dictionary    UserID=7234
+    ${User2}    Create Dictionary    UserID=7235
+    ${UserList}    CreateList    ${User1}    ${User2}
+    ${data}    Create Dictionary    UserList=${UserList}    ChannelID=2014234
+    ${res1}    Post Data    ${URL}    v1/im/delete_talk_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+Talk语音频道设置权限
+    [Tags]    Auth
+    Log    set_talk_user_right
+    ${False}    Convert To Integer    0
+    ${True}    Convert To Integer    1
+    ${Shutuptime}    Convert To Integer    25920
+    ${User1}    Create Dictionary    UserID=7234    NickName=Bobo    SendLiveVoiceRight =${True}
+    ${User2}    Create Dictionary    UserID=7235    NickName=Gogo    SendLiveVoiceRight =${False}
+    ${UserList}    CreateList    ${User1}    ${User2}
+    ${data}    Create Dictionary    ChannelID=2011234    UserList=${UserList}    ChannelDescription=ios
+    ${res1}    Post Data    ${URL}    v1/im/set_talk_user_right    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+获取用户被封禁的IM聊天频道列表
+    [Tags]    Auth
+    Log    get_forbid_im_channel_list
+    ${lnum}    Convert TO Integer    10
+    ${seq}    Convert TO Integer    123
+    ${data}    Create Dictionary    RecordSeq=${seq}    Limit=${lnum}    UserID=6666
+    ${res1}    Post Data    ${URL}    v1/im/get_forbid_im_channel_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Key    ${res1}    RecordCount
+    Dictionary should contain Key    ${res1}    ChannelIDList

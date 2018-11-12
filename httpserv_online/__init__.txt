@@ -1,0 +1,4 @@
+*** Settings ***
+Library           lib/YouMeRequestLib.py
+Library           RequestsLibrary
+Library           Collections

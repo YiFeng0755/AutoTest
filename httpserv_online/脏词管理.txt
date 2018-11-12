@@ -1,0 +1,34 @@
+*** Settings ***
+Library           lib/YouMeRequestLib.py
+Library           RequestsLibrary
+Library           Collections
+
+*** Variables ***
+${URL}            http://api.youme.im/
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958
+
+*** Test Cases ***
+查询公共脏词库
+    [Tags]    Words
+    Log    open_common_dirty_words
+    ${num}    Convert To Integer    10
+    ${data}    Create Dictionary    Limit=${num}
+    ${res1}    Post Data    ${URL}    v1/im/open_common_dirty_words    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Key    ${res1}    DirtyWordsList
+
+查询自定义脏词库
+    [Tags]    Words
+    Log    open_app_dirty_words
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/open_app_dirty_words    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Key    ${res1}    DirtyWordsList
+
+更新自定义脏词库
+    Log    update_app_dirty_words
+    ${mlist}    Create List    maozedong    xijinping
+    ${data}    Create Dictionary    DirtyWordsList=${mlist}
+    ${res1}    Post Data    ${URL}    v1/im/update_app_dirty_words    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK

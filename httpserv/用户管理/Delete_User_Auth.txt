@@ -1,0 +1,76 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               "UserList" \ : \ \ \ 批量认证用户列表(一次不超过100个用户)，包括以下属性：
+...
+...               "UserID" \ \ ： \ \ 用户ID，app内唯一，字符串
+...
+...
+...               {
+...               "UserList":[
+...               {
+...               "UserID":"user1"
+...               },
+...               {
+...               "UserID":"user2"
+...               }]
+...               }
+Force Tags        Delete_User_Auth
+Default Tags      auth
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+添加认证用户删除用户
+    Log    "delete_user_auth"
+    #添加认证用户
+    Add User Auth    user222
+    #删除认证用户
+    ${UserID1}    Create Dictionary    UserID=user222
+    ${UserList}    Create List    ${UserID1}
+    ${data}    Create Dictionary    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_user_auth    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID为空
+    ${UserID1}    Create Dictionary    UserID=
+    ${UserList}    Create List    ${UserID1}
+    ${data}    Create Dictionary    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_user_auth    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+删除99个认证用户
+    log    Delete_User_Auth
+    ${num}    Convert To Integer    99
+    ${UserList}    create_query_im_user_state_n_List    ${num}
+    ${data}    Create Dictionary    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_user_auth    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+删除101个认证用户
+    log    Delete_User_Auth
+    ${num}    Convert To Integer    101
+    ${UserList}    create_query_im_user_state_n_List    ${num}
+    ${data}    Create Dictionary    UserList=${UserList}
+    ${res1}    Post Data    ${URL}    v1/im/delete_user_auth    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+*** Keywords ***
+Add User Auth
+    [Arguments]    ${UserID}
+    ${user1}    Create Dictionary    UserID=${UserID}    NickName=currryhaha    Token=123456
+    ${userlist}    Create List    ${user1}
+    ${data}    Create Dictionary    UserList=${userlist}
+    ${res1}    Post Data    ${URL}    v1/im/add_user_auth    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK

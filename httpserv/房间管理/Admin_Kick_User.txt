@@ -1,0 +1,168 @@
+*** Settings ***
+Documentation     body
+...
+...               body为json格式，各个字段解释如下：
+...
+...               "app_id": \ 游戏ID，整数，必选字段
+...
+...               "channel_id": 频道ID，字符串，必选字段
+...
+...               "kick_user_id": 要踢出的用户游戏ID，字符串，必选字段
+...
+...               "kick_time": 要将该用户踢出频道的时长，单位s，整数
+...
+...               "op_user": 操作人，登记该踢出动作的执行人，字符串
+...
+...
+...               {
+...               "app_id": 1000,
+...               "channel_id": "ch345",
+...               "kick_user_id": "u#456",
+...               "kick_time": 6000,
+...               "op_user": "op_user"
+...               }
+Force Tags        Admin_Kick_User
+Default Tags      kick
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeRequestLib.py
+Library           ../lib/YouMeAnchorRankLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+踢出指定游戏指定Talk频道的用户
+    [Documentation]    body:
+    ...
+    ...    {
+    ...    "app_id": 1000,
+    ...
+    ...    "channel_id": "ch345",
+    ...
+    ...    "kick_user_id": "u#456",
+    ...
+    ...    "kick_time": 6000,
+    ...
+    ...    "op_user": "op_user"
+    ...    }
+    [Tags]    smoke
+    log    admin_kick_user
+    ${app_id}    Convert To Integer    345
+    ${kick_time}    Convert To Integer    6000
+    ${data}    Create Dictionary    app_id=${app_id}    channel_id=ch345    kick_user_id=nh    kick_time=${kick_time}    op_user=op_user
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+app_id为空
+    log    admin_kick_user
+    #${app_id}    Convert To Integer    1000
+    ${kick_time}    Convert To Integer    6000
+    ${data}    Create Dictionary    app_id=    channel_id=ch345    kick_user_id=u#456    kick_time=${kick_time}    op_user=op_user
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+app_id存在中英文
+    log    admin_kick_user
+    #${app_id}    Convert To Bytes    @#$%^
+    ${kick_time}    Convert To Integer    6000
+    ${data}    Create Dictionary    app_id=微微and    channel_id=ch345    kick_user_id=u#456    kick_time=${kick_time}
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+app_id长度超过300字符
+    log    admin_kick_user
+    #${app_id}    Convert To Bytes    @#$%^
+    ${kick_time}    Convert To Integer    6000
+    ${data}    Create Dictionary    app_id=1234567654567654534512345676545676545345123456765456765453451234567654567654534512345676545676545345123456765456765453451234567654567654534512345676545676545345    channel_id=ch345    kick_user_id=u#456    kick_time=${kick_time}
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+channel_id为空
+    log    admin_kick_user
+    ${app_id}    Convert To Integer    345
+    ${kick_time}    Convert To Integer    6000
+    ${data}    Create Dictionary    app_id=${app_id}    channel_id=    kick_user_id=u#456    kick_time=${kick_time}    op_user=op_user
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    50001
+
+channel_id超过300字符
+    log    admin_kick_user
+    ${app_id}    Convert To Integer    345
+    #${channel_id}    Convert To Bytes    @#$%^
+    ${kick_time}    Convert To Integer    6000
+    ${data}    Create Dictionary    app_id=${app_id}    channel_id=1234567654567654534512345676545676545345123456765456765453451234567654567654534512345676545676545345123456765456765453451234567654567654534512345676545676545345    kick_user_id=u#456    kick_time=${kick_time}    op_user=op_user
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+踢出空用户
+    log    admin_kick_user
+    ${app_id}    Convert To Integer    345
+    #${channel_id}    Convert To Integer    -1000
+    ${kick_time}    Convert To Integer    6000
+    ${data}    Create Dictionary    app_id=${app_id}    channel_id=ch345    kick_user_id=    kick_time=${kick_time}    op_user=op_user
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    50001
+
+kick_time为空
+    log    admin_kick_user
+    ${app_id}    Convert To Integer    345
+    #${channel_id}    Convert To Integer    -1000
+    ${kick_user_id}    Convert To Integer    -1000
+    #${kick_time}    Convert To Integer    6000
+    ${data}    Create Dictionary    app_id=${app_id}    channel_id=ch345    kick_user_id=${kick_user_id}    kick_time=    op_user=op_user
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+kick_time存在中英文
+    log    admin_kick_user
+    ${app_id}    Convert To Integer    345
+    #${channel_id}    Convert To Integer    -1000
+    ${kick_user_id}    Convert To Integer    -1000
+    #${kick_time}    Convert To Bytes    @#$%^
+    ${data}    Create Dictionary    app_id=${app_id}    channel_id=ch345    kick_time=微微abc    kick_user_id=${kick_user_id}    op_user=op_user
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+kick_time长度超过300字符
+    log    admin_kick_user
+    ${app_id}    Convert To Integer    345
+    #${channel_id}    Convert To Integer    -1000
+    ${kick_user_id}    Convert To Integer    -1000
+    #${kick_time}    Convert To Bytes    @#$%^
+    ${data}    Create Dictionary    app_id=${app_id}    channel_id=ch345    kick_time=1234567654567654534512345676545676545345123456765456765453451234567654567654534512345676545676545345123456765456765453451234567654567654534512345676545676545345    kick_user_id=${kick_user_id}    op_user=op_user
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+重复踢出频道内用户
+    [Documentation]    user：user1234
+    ...
+    ...    channel：a123
+    log    admin_kick_user
+    ${app_id}    Convert To Integer    345
+    ${kick_time}    Convert To Integer    6000
+    Join Channel    user1234    a123
+    ${data}    Create Dictionary    app_id=${app_id}    channel_id=a123    kick_user_id=user1234    kick_time=${kick_time}    op_user=op_user
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    log    重复踢用户
+    ${res1}    Post Data    ${URL}    v1/im/admin_kick_user    ${data}
+
+*** Keywords ***
+Join Channel
+    [Arguments]    ${UserID}    ${ChannelID}
+    ${data}    Create Dictionary    UserID=${UserID}    ChannelID=${ChannelID}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_enter_channel    ${data}

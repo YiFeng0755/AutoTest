@@ -1,0 +1,100 @@
+*** Settings ***
+Documentation     body
+...
+...               {
+...               "RecordSeq" : 0,
+...               "Limit" : 10,
+...               "UserID":"zhubo"
+...               }
+Force Tags        Get_Forbid_Im_Channel_List
+Default Tags      forbid
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+获取用户被封禁的IM聊天频道列表
+    [Documentation]    {
+    ...    "RecordSeq" : 0,
+    ...    "Limit" : 10,
+    ...    "UserID":"zhubo"
+    ...    }
+    [Tags]    smoke
+    log    Get_Forbid_Im_Channel_List
+    ${RecordSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    RecordSeq=${RecordSeq}    Limit=${Limit}    UserID=zhubo
+    ${res1}    Post Data    ${URL}    v1/im/get_forbid_im_channel_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+RecordSeq为空
+    log    Get_Forbid_Im_Channel_List
+    ${RecordSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    RecordSeq=    Limit=${Limit}    UserID=zhubo
+    ${res1}    Post Data    ${URL}    v1/im/get_forbid_im_channel_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit为空
+    log    Get_Forbid_Im_Channel_List
+    ${RecordSeq}    Convert To Integer    0
+    ${data}    Create Dictionary    RecordSeq=${RecordSeq}    Limit=    UserID=zhubo
+    ${res1}    Post Data    ${URL}    v1/im/get_forbid_im_channel_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+UserID为空
+    log    Get_Forbid_Im_Channel_List
+    ${RecordSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    RecordSeq=${RecordSeq}    Limit=${Limit}    UserID=
+    ${res1}    Post Data    ${URL}    v1/im/get_forbid_im_channel_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+body为空
+    log    Get_Forbid_Im_Channel_List
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/get_forbid_im_channel_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+用户加入两个房间，获取用户所在的两个封禁房间列表
+    [Documentation]    测试步骤：
+    ...    1，用户加入两个房间
+    ...
+    ...    2，封禁此用户所在的两个房间
+    ...
+    ...    3，获取房间列表
+    log    Get_Forbid_Im_Channel_List
+    Join Channel    user11    channel11
+    Join Channel    user11    channel22
+    Forbid channel    channel11
+    Forbid channel    channel22
+    ${RecordSeq}    Convert To Integer    0
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    RecordSeq=${RecordSeq}    Limit=${Limit}    UserID=user11
+    ${res1}    Post Data    ${URL}    v1/im/get_forbid_im_channel_list    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+*** Keywords ***
+Join Channel
+    [Arguments]    ${UserID}    ${ChannelID}
+    ${data}    Create Dictionary    UserID=${UserID}    ChannelID=${ChannelID}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_enter_channel    ${data}
+
+Forbid channel
+    [Arguments]    ${ChannelID}
+    [Documentation]    v1/im/forbid_im_channel_send_msg
+    ${ShutUpTime}    Convert To Integer    259200
+    ${data}    Create Dictionary    ChannelID=${ChannelID}    ChannelDescription=ios-1    ShutUpTime=${ShutUpTime}
+    ${res1}    Post Data    ${URL}    v1/im/forbid_im_channel_send_msg    ${data}

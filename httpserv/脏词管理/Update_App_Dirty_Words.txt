@@ -1,0 +1,43 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               "DirtyWordsList" 自定义脏词列表，以JSONArray格式记录脏词的字符串
+...
+...
+...               {
+...               "DirtyWordsList": [
+...               "QQ娘",
+...               "度娘",
+...               "绿坝娘"
+...               ]
+...               }
+Force Tags        Update_App_Dirty_Words
+Default Tags      dirty
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeAnchorRankLib.py
+Library           ../lib/YouMeRequestLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+更新自定义脏词库查询脏词库
+    [Documentation]    body实例
+    ...
+    ...    {
+    ...     "DirtyWordsList": [
+    ...     \ \ \ "QQ娘",
+    ...     \ \ "度娘",
+    ...     \ "绿坝娘"
+    ...    ]
+    ...    }
+    [Tags]    smoke
+    log    update_app_dirty_words
+    ${DirtyWordsList}    Create List    QQ娘    度娘    绿坝娘
+    ${data}    Create Dictionary    DirtyWordsList=${DirtyWordsList}
+    ${res1}    Post Data    ${URL}    v1/im/update_app_dirty_words    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0

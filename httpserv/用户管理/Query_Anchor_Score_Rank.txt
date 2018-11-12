@@ -1,0 +1,250 @@
+*** Settings ***
+Documentation     查询主播积分排行
+...               {
+...               \ \ \ \ "StartDate": "20170702"
+...               }
+...
+...               "StartDate": \ \ 查询起始日期，字符串，格式为YYYYMMDD，必选字段
+...
+...               "EndDate": \ \ \ 查询结束日期，字符串，格式为YYYYMMDD，可选字段
+...
+...               "SvrArea": \ \ \ \ \ 频道所在区服名，字符串，可选字段
+...
+...               "ChannelID": \ \ \ 频道ID，字符串，可选字段
+...
+...               "OrderBy": \ \ \ \ \ 排序字段，1是按礼物积分排序，2是按礼物个数排序，不携带时默认按照礼物积分排序，整数，可选字段
+...
+...               "Limit": \ \ \ \ \ 返回排行榜记录的最大条数，默认值50，最大200，整数，可选字段
+Force Tags        query_anchor_score_rank
+Default Tags      score
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeRequestLib.py
+Library           ../lib/YouMeAnchorRankLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+查询主播礼物积分排行榜
+    [Documentation]    本接口只针对主播用户，查询所有主播用户所收到的礼物积分排行榜。
+    ...
+    ...    body：
+    ...    {
+    ...    \ \ "StartDate": "20170702"
+    ...    }
+    [Tags]    smoke
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+StartDate为空
+    [Documentation]    "StartDate": 查询起始日期，字符串，格式为YYYYMMDD，起始日期若给定，则与当前自然日期相比不可以往前超过35天，必选字段
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=    EndDate=${EndDate}    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70013
+
+StartDate中间为空
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=2018 06 21    EndDate=${EndDate}    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70032
+
+EndDate为空
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+EndDate长度值超过日期长度
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=20180504102    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+EndDate格式非法
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=2018 -06-21    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70013
+
+SvrArea为空
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+SvrArea中间为空
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=10 20 30    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+SvrArea为300字符
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${SvrArea}    Convert To Integer    123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=${SvrArea}    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+ChannelID为空
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+ChannelID为600个字符
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${ChannelID}    Convert To Integer    123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890123456763456789087651234567890
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=${ChannelID}    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+OrderBy内容为空
+    Log    "query_anchor_score_rank"
+    ${data}    Create Dictionary    StartDate=20180504    EndDate=20180504    SvrArea=abc    ChannelID=2011123    OrderBy=
+    ${ChannelID}    Convert To Integer    2011234
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${OrderBy}    Convert To Integer    1
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=${ChannelID}    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+OrderBy不存在
+    Log    "query_anchor_score_rank"
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=2011123
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+OrderBy按礼物积分排序
+    [Documentation]    "OrderBy": 排序字段，1是按礼物积分排序，2是按礼物个数排序，不携带时默认按照礼物积分排序，整数，可选字段
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+OrderBy按礼物个数排序
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    2
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+OrderBy长度超过300字符
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Bytes    @#$%^
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+OrderBy多种类型组合
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Bytes    123abc#$%
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit为最大值
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ...    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+Limit为空
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    200
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ...    Limit=
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+Limit超过最大值
+    Log    "query_anchor_score_rank"
+    ${OrderBy}    Convert To Integer    1
+    ${Limit}    Convert To Integer    201
+    ${StartDate}    Get Before Date
+    ${EndDate}    Get Now Date
+    ${data}    Create Dictionary    StartDate=${StartDate}    EndDate=${EndDate}    SvrArea=abc    ChannelID=2011123    OrderBy=${OrderBy}
+    ...    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+body内容为空
+    Log    "query_anchor_score_rank"
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_score_rank    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70013

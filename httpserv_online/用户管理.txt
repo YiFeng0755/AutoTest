@@ -1,0 +1,213 @@
+*** Settings ***
+Documentation     httpserv的接口自动化用例
+Library           RequestsLibrary
+Library           Collections
+Library           lib/YouMeRequestLib.py
+Library           lib/YouMeAnchorRankLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://api.youme.im/
+
+*** Test Cases ***
+主播积分排行查询
+    [Documentation]    主播积分排行查询
+    [Tags]    Anchor    User    channel
+    ${case1}    Anchor Rank Case    1
+    Dictionary should contain Item    ${case1}    ActionStatus    OK
+    ${case2}    Anchor Rank Case    2
+    Dictionary should contain Item    ${case2}    ActionStatus    OK
+    ${case3}    Anchor Rank Case    3
+    Dictionary should contain Item    ${case3}    ActionStatus    OK
+    ${case4}    Anchor Rank Case    4
+    Dictionary should contain Item    ${case4}    ActionStatus    OK
+    ${case5}    Anchor Rank Case    5
+    Dictionary should contain Item    ${case5}    ActionStatus    OK
+    ${case6}    Anchor Rank Case    6
+    Dictionary should contain Item    ${case6}    ErrorInfo    invalid json format
+    Dictionary should contain Item    ${case6}    ErrorCode    70001
+    ${case7}    Anchor Rank Case    7
+    Dictionary should contain Item    ${case7}    ActionStatus    OK
+
+主播基本信息查询
+    [Documentation]    查询主播基本信息
+    [Tags]    Anchor    User    channel
+    [Timeout]    10 seconds
+    Log    "query_anchor_info"
+    ${data}    Create Dictionary    UserID=pro    AnchorID=youmepro
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_info    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    AnchorID    youmepro
+    ${data}    Create Dictionary    UserID=meiyouzhegeid    AnchorID=youmepro
+    ${res2}    Post Data    ${URL}    v1/im/query_anchor_info    ${data}
+    Dictionary should contain Item    ${res2}    ErrorCode    70016
+
+添加用户
+    [Tags]    User
+    Log    "add_user_auth"
+    ${user1}    Create Dictionary    UserID=user1001    NickName=currryhaha    Token=123456
+    ${user2}    Create Dictionary    UserID=user1002    NickName=makaha    Token=123456
+    ${userlist}    Create List    ${user1}    ${user2}
+    ${data}    Create Dictionary    UserList=${userlist}
+    log    ${data}
+    ${res1}    Post Data    ${URL}    v1/im/add_user_auth    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+删除用户
+    [Tags]    User
+    Log    delete_user_auth
+    ${user1}    Create Dictionary    UserID=user1001
+    ${user2}    Create Dictionary    UserID=user1002
+    ${userlist}    Create List    ${user1}    ${user2}
+    ${data}    Create Dictionary    UserList=${userlist}
+    ${res1}    Post Data    ${URL}    v1/im/delete_user_auth    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+获取用户在线状态
+    [Tags]    User
+    Log    query_im_user_state
+    ${user1}    Create Dictionary    UserID=user1001
+    ${user2}    Create Dictionary    UserID=user1002
+    ${userlist}    Create List    ${user1}    ${user2}
+    ${data}    Create Dictionary    UserList=${userlist}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_state    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Key    ${res1}    QueryResult
+
+获取主播用户的排班时间
+    [Documentation]    参数样例：
+    ...
+    ...    {"ChannelID": "24180004", "Date":"20170726", "AnchorID": "youmepro"}
+    ...
+    ...    日期为空的时候返回的是当天的排班
+    ...
+    ...    共有四个用例：
+    ...    正确的输入
+    ...    用户不存在的输入
+    ...    日期为空的输入
+    ...    频道为空的输入
+    [Tags]    Anchor    User
+    Log    query_anchor_sche
+    ${data}    Create Dictionary    Date=20170726    AnchorID=youmepro    ChannelID=24180004
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_sche    ${data}
+    Dictionary should contain Key    ${res1}    Sche
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    ${data}    Create Dictionary    Date=a20170726    AnchorID=youmepro    ChannelID=
+    ${res2}    Post Data    ${URL}    v1/im/query_anchor_sche    ${data}
+    Dictionary should contain Item    ${res2}    ErrorCode    70003
+    ${data}    Create Dictionary    Date=    AnchorID=youmepro    ChannelID=24180004
+    ${res3}    Post Data    ${URL}    v1/im/query_anchor_sche    ${data}
+    Dictionary should contain Item    ${res3}    ActionStatus    OK
+    Dictionary should contain Key    ${res3}    Sche
+    ${data}    Create Dictionary    Date=20170726    AnchorID=areyouok    ChannelID=24180004
+    ${res4}    Post Data    ${URL}    v1/im/query_anchor_sche    ${data}
+    Dictionary should contain Item    ${res4}    ActionStatus    OK
+    ${value}    Get From dictionary    ${res4}    Sche
+    Should be equal as Strings    ${value}    None
+
+查询玩家积分
+    [Documentation]    query_im_gift_score
+    ...
+    ...    参数样例
+    ...    {"StartDate": "","EndDate": "","UserID": "7946"}
+    [Tags]    User
+    Log    query_im_gift_score
+    ${data}    Create Dictionary    StartDate=    EndDate=    UserID=7946
+    ${res1}=    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Key    ${res1}    GiftScore
+    Dictionary should contain Key    ${res1}    GiftCount
+    ${data}    Create Dictionary    StartDate=20170101    EndDate=20170721    UserID=7946
+    ${res2}=    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Item    ${res2}    ErrorCode    70032
+    ${data}    Create Dictionary    StartDate=    EndDate=    UserID=noboydhere
+    ${res3}=    Post Data    ${URL}    v1/im/query_im_gift_score    ${data}
+    Dictionary should contain Key    ${res3}    GiftScore
+
+查询玩家积分排行
+    [Documentation]    query_im_gift_score_rank
+    ...
+    ...    参数用例
+    ...    {"UserID": "5555","Date": "20170725",\ \ \ \ \ \ \ \ "Summary": 1, \ \ \ \ \ \ \ "SvrArea": "", \ \ \ \ \ \ "Limit": 10, \ \ \ \ \ "NeedFavoriteAnchor":1}
+    [Tags]    User
+    Log    query_im_gift_score_rank
+    ${flag}=    Convert To Number    1
+    ${num}    Convert To Number    10
+    ${data}    Create Dictionary    Date=20170725    Limit=${num}    UserID=7946    NeedFavoriteAnchor=${flag}
+    ${res1}=    Post Data    ${URL}    v1/im/query_im_gift_score_rank    ${data}
+    Dictionary should contain Key    ${res1}    RankList
+
+查询主播监控信息
+    [Documentation]    query_anchor_monitor
+    ...
+    ...    参数样例
+    ...    {"Date": "20170725", "ChannelID": "24180004", "AnchorID": "pro", "NeedActionDetail": 1}
+    [Tags]    Anchor    User
+    [Timeout]    10 seconds
+    Log    query_anchor_monitor
+    ${flag}=    Convert To Number    1
+    ${data}    Create Dictionary    Date=20170725    ChannelID=24180004    AnchorID=pro    NeedActionDetail=${flag}
+    ${res1}    Post Data    ${URL}    v1/im/query_anchor_monitor    ${data}
+    Dictionary should contain Key    ${res1}    ActionDetail
+    Dictionary should contain Key    ${res1}    MicDuration
+    ${flag}=    Convert To Number    0
+    ${data}    Create Dictionary    Date=20170725    ChannelID=24180004    AnchorID=pro    NeedActionDetail=${flag}
+    ${res2}    Post Data    ${URL}    v1/im/query_anchor_monitor    ${data}
+    Dictionary should not contain Key    ${res2}    ActionDetail
+    Dictionary should contain Key    ${res2}    MicDuration
+    ${flag}=    Convert To Number    1
+    ${data}    Create Dictionary    Date=20170725    ChannelID=kkkkk24180004    AnchorID=pro    NeedActionDetail=${flag}
+    ${res3}    Post Data    ${URL}    v1/im/query_anchor_monitor    ${data}
+    Dictionary should contain item    ${res3}    ActionDetail    []
+
+查询多个主播的基本信息
+    [Tags]    Anchor    User
+    Comment    case 3
+    Log    "query_multi_anchor_info"
+    ${num}    Convert To Number    4
+    ${data}    Create Dictionary    Limit=${num}
+    ${res1}    Post Data    ${URL}    v1/im/query_multi_anchor_info    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    ${value}    Get From Dictionary    ${res1}    UserList
+    ${expectuser}    Create Dictionary    NickName=王者小妹子    AnchorID=10000    ProfilePhoto=    Signature=    UserID=10000
+    Comment    case 2
+    ${user1}    Create Dictionary    UserID    pro
+    ${user2}    Create Dictionary    UserID    12345
+    ${num}    Convert To Number    100
+    ${userlist}    Create List    ${user1}    ${user2}
+    ${data}    Create Dictionary    Limit=${num}    AnchorID=youmepro    UserList=${userlist}
+    ${res2}    Post Data    ${URL}    v1/im/query_multi_anchor_info    ${data}
+    Dictionary should contain Item    ${res2}    ActionStatus    OK
+
+用户积分排行查询
+    [Tags]    User    Anchor
+    ${res1}    User Rank Case    1
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary Should Contain Key    ${res1}    ScoreCount
+    ${res2}    User Rank Case    2
+    Dictionary should contain Item    ${res2}    ErrorCode    70006
+    ${res3}    User Rank Case    3
+    Dictionary should contain Item    ${res3}    ActionStatus    OK
+    ${res4}    User Rank Case    4
+    Dictionary should contain Item    ${res4}    ErrorCode    70001
+    ${res5}    User Rank Case    5
+    Dictionary should contain Item    ${res5}    ActionStatus    OK
+    ${res6}    User Rank Case    6
+    Dictionary should contain Item    ${res6}    ActionStatus    OK
+    ${res7}    User Rank Case    7
+    Dictionary should contain Item    ${res7}    ActionStatus    OK
+    Dictionary Should Contain Key    ${res7}    Score
+    Dictionary Should Contain Key    ${res7}    GiftTotal
+
+查询app
+    Log    query_app
+    ${ID}    Convert To Integer    971
+    ${data}    Create Dictionary    AppID=${ID}
+    Set AppKey And Secret    YOUME3AA1C9CABAD4F182B2BE26D5BFCF8B79593EFAE3    s0f8zCk6WhDAhPrrAfRijzswxBvJotX+7Q1wE7DDxjOTANF56i2YFVKOw5qwBYahKGscVUj/RaiOAr0N5x7dqXTKsSrU/JgMwg8Ix9ZJCfcOpn3hbnPvbJl2gDlQrguHmBzxIFHrZBfir6LBFczFJS4E6l9arM237feU0W1FolMBAAE=
+    ${res1}    Post Data    ${URL}    v1/im/query_app    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Key    ${res1}    ApiKey
+    Dictionary should contain Key    ${res1}    AppSecret
+    Dictionary should contain Key    ${res1}    AppName
+    Dictionary should contain Key    ${res1}    AppKey

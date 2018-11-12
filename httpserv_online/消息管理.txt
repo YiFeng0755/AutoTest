@@ -1,0 +1,192 @@
+*** Settings ***
+Library           lib/YouMeRequestLib.py
+Library           RequestsLibrary
+Library           Collections
+
+*** Variables ***
+${URL}            http://api.youme.im/
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958
+
+*** Test Cases ***
+查询用户私聊消息
+    [Documentation]    样例： {
+    ...    "UserID": "528",
+    ...    "MsgSeq": 0,
+    ...    "Limit": 3,
+    ...    "BeginTime": 1487931492,
+    ...    "EndTime": 1488009600,
+    ...    "Reverse": 1
+    ...    }
+    ...
+    ...    注意时间跨度不能多于一天
+    [Tags]    channel
+    Log    query_im_user_private_msg
+    ${num}    Convert To Integer    10
+    ${begin}    Get Time    epoch    2017-07-22 00:00:00
+    ${end}    Get Time    epoch    2017-07-22 22:59:59
+    ${seq}=    Convert To Integer    12345
+    ${data}    CreateDictionary    UserID=1234    MsgSeq=${seq}    Limit=${num}    BeginTime=${begin}    EndTime=${end}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_private_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+
+查询用户会话消息
+    [Tags]    Message    channel
+    Log    query_im_session_msg
+    ${num}    Convert To Integer    10
+    ${begin}    Get Time    epoch    2017-07-23 00:00:00
+    ${end}    Get Time    epoch    2017-07-23 23:59:59
+    ${seq}=    Convert To Integer    12345
+    ${data}    CreateDictionary    SendID=1234    MsgSeq=${seq}    Limit=${num}    BeginTime=${begin}    EndTime=${end}
+    ...    RecvID=2011234
+    ${res1}    Post Data    ${URL}    v1/im/query_im_session_msg    ${data}
+
+添加公告
+    [Documentation]    {
+    ...    "Notice":
+    ...    \ \ \ \ \ {
+    ...    "ChannelID": "channel12345",
+    ...    "NoticeType": 2,
+    ...    "LoopType": 1,
+    ...
+    ...    "SendDate": "20170502",
+    ...    "SendStartTime": "15:00:00",
+    ...    "SendTimes": 3,
+    ...    "SendInterval": 30,
+    ...
+    ...    "Title": "title12345",
+    ...    "Content": "content12345",
+    ...    "LinkKeyWords": "keywords12345",
+    ...    "LinkAddr": "address12345",
+    ...
+    ...    "EnableStatus": 2,
+    ...    "Creator": "test"
+    ...    }
+    ...    }
+    [Tags]    channel
+    ${type}    Convert To Integer    2
+    ${looptype}    Convert To Integer    1
+    ${Interval}    Convert To Integer    30
+    ${times}    Convert To Integer    3
+    ${status}    Convert To Integer    2
+    ${notice}    CreateDictionary    ChannelID=2011234    NoticeType=${type}    LoopType=${looptype}    SendDate=20170802    SendStartTime=14:00:00
+    ...    SendTimes=${times}    SendInterval=${Interval}    Title=title12345    Content=content12345    LinkKeyWords=12345    LinkAddr=address12345
+    ...    EnableStatus=${status}    Creator=test
+    ${data}=    CreateDictionary    Notice=${notice}
+    ${res1}    post data    ${URL}    v1/im/add_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    ${id}    Get From Dictionary    ${res1}    NoticeID
+    ${NoticeID}=    set Variable    ${id}
+
+查询公告
+    [Documentation]    {
+    ...    "EnableStatus": 2
+    ...    }
+    [Tags]    channel
+    Log    query_notice
+    ${status}    Convert To Integer    2
+    ${data}    Create Dictionary    EnableStatus=${status}
+    ${res1}    post data    ${URL}    v1/im/query_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Key    ${res1}    Notice
+
+查询频道消息
+    [Tags]    channel
+    Log    query_im_channel_msg
+    ${num}    Convert To Integer    10
+    ${begin}    Get Time    epoch    2017-08-10 00:00:00
+    ${end}    Get Time    epoch    2017-08-10 22:59:59
+    ${seq}=    Convert To Integer    12345
+    ${data}    CreateDictionary    ChannelID=2011234    MsgSeq=${seq}    Limit=${num}    BeginTime=${begin}    EndTime=${end}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+
+修改公告
+    [Tags]    channel
+    Log    先加一个公告
+    ${type}    Convert To Integer    2
+    ${looptype}    Convert To Integer    1
+    ${Interval}    Convert To Integer    30
+    ${times}    Convert To Integer    3
+    ${status}    Convert To Integer    2
+    ${notice}    CreateDictionary    ChannelID=2011234    NoticeType=${type}    LoopType=${looptype}    SendDate=20170802    SendStartTime=14:00:00
+    ...    SendTimes=${times}    SendInterval=${Interval}    Title=title12345    Content=content12345    LinkKeyWords=12345    LinkAddr=address12345
+    ...    EnableStatus=${status}    Creator=test
+    ${data1}=    CreateDictionary    Notice=${notice}
+    ${res1}    post data    ${URL}    v1/im/add_notice    ${data1}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    ${id}    Get From Dictionary    ${res1}    NoticeID
+    Log    update_notice
+    ${type}    Convert To Integer    2
+    ${looptype}    Convert To Integer    1
+    ${Interval}    Convert To Integer    30
+    ${times}    Convert To Integer    3
+    ${status}    Convert To Integer    2
+    ${notice}    CreateDictionary    NoticeID=${id}    ChannelID=2011234    NoticeType=${type}    LoopType=${looptype}    SendDate=20170802
+    ...    SendStartTime=14:00:00    SendTimes=${times}    SendInterval=${Interval}    Title=title12345    Content=content12345    LinkKeyWords=12345
+    ...    LinkAddr=address12345    EnableStatus=${status}    Updator=test
+    ${data}=    CreateDictionary    Notice=${notice}
+    ${res1}    post data    ${URL}    v1/im/update_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+删除公告
+    [Tags]    Message    notice    channel
+    Log    delete_notice
+    ${id_1}    Convert To Integer    100001
+    ${id_2}    Convert To Integer    100002
+    ${notice_id1}    CreateDictionary    NoticeID=${id_1}
+    ${notice_id2}    CreateDictionary    NoticeID=${id_2}
+    ${nlist}    CreateList    ${notice_id1}    ${notice_id2}
+    ${data}    CreateDictionary    Notice=${nlist}
+    ${res1}    Post Data    ${URL}    v1/im/delete_notice    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+查询举报消息
+    [Documentation]    样例：{
+    ...    "Limit": 10,
+    ...    "BeginTime": 1494545710,
+    ...    "EndTime": 1494555710,
+    ...    "ShowTotal" : 1,
+    ...    "UserID": "10011",
+    ...    "Reverse": 1
+    ...    }
+    log    query_tipoff_msg
+    ${num}    Convert To Number    10
+    ${data}    CreateDictionary    Limit=${num}    UserID=1234    ShowTotal =${num}
+    ${res1}    Post Data    ${URL}    v1/im/query_tipoff_msg    ${data}
+    #Dictionary should contain Item    ${res1}    ErrorCode    50003    #这条已经失效了
+    #Dictionary should contain Key    ${res1}    msg_list
+    #Dictionary should contain Key    ${res1}    msg_cnt
+
+请求发送消息
+    [Tags]    Message
+    Log    query_im_send_msg
+    ${type}=    Convert To Integer    2
+    ${data}    Create Dictionary    ChatType=${type}    SendID=Robot    RecvID=2011234    Content=欢迎你来到这里，哈哈    MsgSeq=123456
+    ${res1}    Post Data    ${URL}    v1/im/query_im_send_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    ${type}=    Convert To Integer    1
+    ${data}    Create Dictionary    ChatType=${type}    SendID=Robot    RecvID=6666    Content=欢迎你来到这里，哈哈，这是私聊    MsgSeq=123458
+    ${res2}    Post Data    ${URL}    v1/im/query_im_send_msg    ${data}
+    Dictionary should contain Item    ${res2}    ActionStatus    OK
+
+查询用户频道消息
+    [Tags]    Message
+    Log    query_im_user_channel_msg
+    ${num}    Convert To Integer    10
+    ${begin}    Get Time    epoch    2017-08-10 00:00:00
+    ${end}    Get Time    epoch    2017-08-10 22:59:59
+    ${seq}=    Convert To Integer    12345
+    ${data}    CreateDictionary    UserID=6666    MsgSeq=${seq}    Limit=${num}    BeginTime=${begin}    EndTime=${end}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_user_channel_msg    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+
+在talk频道中发送文本消息
+    [Documentation]    这里发送成功，需要构造一个客户端，开辟一个频道。
+    ...    或者，直接操作redis
+    [Tags]    channel
+    Log    send_talk_channel_message
+    ${msgSeq}    Convert To Integer    1223213124
+    ${data}    CreateDictionary    Msg=hahahahhatest    MsgID=${msgSeq}    ToChannelID=2019999
+    ${res1}    Post Data    ${URL}    v1/im/send_talk_channel_message    ${data}
+    Dictionary should contain item    ${res1}    ErrorCode    70093

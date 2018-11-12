@@ -1,0 +1,190 @@
+*** Settings ***
+Documentation     获取IM房间用户列表
+...
+...               “RoomID” \ : \ 房间ID，app内唯一，字符串
+...               “Limit” : \ \ 要获取的用户数目，整数，负数表示获取房间所有用户
+Force Tags        Get Im User List Of Room
+Default Tags      List
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeRequestLib.py
+Library           ../lib/YouMeAnchorRankLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+获取加入IM房间的用户列表
+    [Tags]    smoke
+    Log    "get_im_user_list_of_room"
+    ${Limit}    Convert To Integer    2
+    Join Room    user123    room567
+    Join Room    user456    room567
+    ${data}    Create Dictionary    RoomID=room567    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    return_list_cnt    2
+    ${value}    Get From Dictionary    ${res1}    user_list
+    ${result}    Get From List    ${value}    0
+    ${result1}    Get From List    ${value}    1
+    Should Be Equal As Strings    ${result}    {u'user_name': u'user123'}
+    Should Be Equal As Strings    ${result1}    {u'user_name': u'user456'}
+
+RoomID为空
+    Log    get_im_user_list_of_room
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    RoomID=    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+
+RoomID长度超过500
+    Log    get_im_user_list_of_room
+    ${Limit}    Convert To Integer    10
+    ${roomid}    Convert To Integer    12345678900987654321123456789009876543211234567890098765432112345678900987654321123456789009876543211234567890098765432112345678900987654321123456789009876543211234567890098765432112345678900987654321123456789009876543211234567890098765432112345678900987654321123456789009876543211234567890098765432112345678900987654321123456789009876543211234567890098765432112345678900987654321123456789009876543211234567890098765432112345678900987654321123456789009876543211234567890098765432112345678900987654321123456789009876543211234567890098765432112345678900987654321
+    ${data}    Create Dictionary    Limit=${Limit}    RoomID=${roomid}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+
+Limit为空
+    Log    get_im_user_list_of_room
+    ${data}    Create Dictionary    RoomID=jason_room    Limit=
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    FAIL
+    Dictionary should contain Item    ${res1}    ErrorCode    70001
+
+body为空
+    [Documentation]    文档中未说明RoomID和limit均为可选字段
+    Log    get_im_user_list_of_room
+    ${data}    Create Dictionary
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+获取房间内踢出去后的用户列表
+    Log    "get_im_user_list_of_room"
+    ${Limit}    Convert To Integer    10
+    ${data}    Create Dictionary    RoomID=room999    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    #用户加入房间room999
+    ${Limit}    Convert To Integer    2
+    Join Room    user222    room999
+    Join Room    user333    room999
+    ${data}    Create Dictionary    RoomID=room999    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    return_list_cnt    2
+    ${value}    Get From Dictionary    ${res1}    user_list
+    ${result}    Get From List    ${value}    0
+    ${result1}    Get From List    ${value}    1
+    Should Be Equal As Strings    ${result}    {u'user_name': u'user222'}
+    Should Be Equal As Strings    ${result1}    {u'user_name': u'user333'}
+    Leave Channel    user222    room999
+    ${Limit}    Convert To Integer    2
+    ${data}    Create Dictionary    RoomID=room999    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    return_list_cnt    1
+    ${value}    Get From Dictionary    ${res1}    user_list
+    ${result}    Get From List    ${value}    0
+    #Should Be Equal As Strings    ${result}    {u'user_name': u'user123'}
+    Should Be Equal As Strings    ${result}    {u'user_name': u'user333'}
+
+获取踢出去后又加入的IM房间的用户列表
+    Log    "get_im_user_list_of_room"
+    ${Limit}    Convert To Integer    2
+    Join Room    user426    room8886
+    Join Room    user475    room8886
+    ${data}    Create Dictionary    RoomID=room8886    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    return_list_cnt    2
+    ${value}    Get From Dictionary    ${res1}    user_list
+    ${result}    Get From List    ${value}    0
+    ${result1}    Get From List    ${value}    1
+    Should Be Equal As Strings    ${result}    {u'user_name': u'user475'}
+    Should Be Equal As Strings    ${result1}    {u'user_name': u'user426'}
+    Leave Channel    user426    room8886
+    ${Limit}    Convert To Integer    2
+    ${data}    Create Dictionary    RoomID=room8886    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    return_list_cnt    1
+    ${value}    Get From Dictionary    ${res1}    user_list
+    ${result}    Get From List    ${value}    0
+    Should Be Equal As Strings    ${result}    {u'user_name': u'user475'}
+    Join Room    user426    room8886
+    ${data}    Create Dictionary    RoomID=room8886    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    return_list_cnt    2
+
+重复加入用户获取IM房间的用户列表
+    [Documentation]    \#两次加入同一个用户，获取IM房间的用户列表
+    Log    "get_im_user_list_of_room"
+    ${Limit}    Convert To Integer    2
+    Join Room    user634    room8126
+    ${data}    Create Dictionary    RoomID=room8126    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    return_list_cnt    1
+    ${value}    Get From Dictionary    ${res1}    user_list
+    ${result}    Get From List    ${value}    0
+    Should Be Equal As Strings    ${result}    {u'user_name': u'user634'}
+    Join Room    user634    room8126
+    ${data}    Create Dictionary    RoomID=room8126    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    return_list_cnt    1
+    ${value}    Get From Dictionary    ${res1}    user_list
+    ${result}    Get From List    ${value}    0
+
+加入多个用户获取IM房间的用户列表
+    [Documentation]    \#加入多个用户，获取IM房间的用户列表
+    Log    "get_im_user_list_of_room"
+    ${Limit}    Convert To Integer    10
+    Join Room    user123    room245
+    Join Room    user456    room245
+    Join Room    user789    room245
+    Join Room    user000    room245
+    Join Room    user666    room245
+    Join Room    user777    room245
+    Join Room    user888    room245
+    ${data}    Create Dictionary    RoomID=room245    Limit=${Limit}
+    ${res1}    Post Data    ${URL}    v1/im/get_im_user_list_of_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+    Dictionary should contain Item    ${res1}    return_list_cnt    7
+    ${value}    Get From Dictionary    ${res1}    user_list
+    ${result}    Get From List    ${value}    0
+    ${result1}    Get From List    ${value}    1
+    ${result2}    Get From List    ${value}    2
+    ${result3}    Get From List    ${value}    3
+    ${result4}    Get From List    ${value}    4
+    ${result5}    Get From List    ${value}    5
+    ${result6}    Get From List    ${value}    6
+    Should Be Equal As Strings    ${result}    {u'user_name': u'user000'}
+    Should Be Equal As Strings    ${result1}    {u'user_name': u'user123'}
+    Should Be Equal As Strings    ${result2}    {u'user_name': u'user456'}
+    Should Be Equal As Strings    ${result3}    {u'user_name': u'user666'}
+    Should Be Equal As Strings    ${result4}    {u'user_name': u'user777'}
+    Should Be Equal As Strings    ${result5}    {u'user_name': u'user789'}
+    Should Be Equal As Strings    ${result6}    {u'user_name': u'user888'}
+
+*** Keywords ***
+Join Room
+    [Arguments]    ${userID}    ${ChannelID}
+    ${data}    Create Dictionary    UserID=${UserID}    ChannelID=${ChannelID}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_enter_channel    ${data}
+
+Leave Channel
+    [Arguments]    ${userID}    ${ChannelID}
+    ${data}    Create Dictionary    UserID=${UserID}    ChannelID=${ChannelID}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}

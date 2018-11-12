@@ -1,0 +1,966 @@
+*** Settings ***
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeRequestLib1.py
+Library           ../lib/YouMeAnchorRankLib.py
+
+*** Variables ***
+${URL}            https://voicesvr.youme.im
+
+*** Test Cases ***
+验证用户有效性
+    [Documentation]    body：
+    ...    {
+    ...    "token":"V2_HCT34T-tbavXMy2RikD_lSNjL1xBoJmkD-YZEXqRDyuf7Zf7jau5qHhshqMkt657t5AId87foVR5T8mM2Rss-_osNisoGjgQao98p4zt-wCs0I0p67aDiWIuBQQauZS1vnFpGH7WYWHK06Up9CUjnA",
+    ...    "userid":"7xpjJFC_10gI9yQwwn3swNz9ARgyWJ8m8O18y5_A"
+    ...    }
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    token
+
+重复验证用户合法性
+    [Documentation]    body：
+    ...    {
+    ...    "token":"V2_HCT34T-tbavXMy2RikD_lSNjL1xBoJmkD-YZEXqRDyuf7Zf7jau5qHhshqMkt657t5AId87foVR5T8mM2Rss-_osNisoGjgQao98p4zt-wCs0I0p67aDiWIuBQQauZS1vnFpGH7WYWHK06Up9CUjnA",
+    ...    "userid":"7xpjJFC_10gI9yQwwn3swNz9ARgyWJ8m8O18y5_A"
+    ...    }
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    token
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    token
+
+验证用户有效性请求参数全部为空
+    [Documentation]    body：
+    ...    {
+    ...    "token":"V2_HCT34T-tbavXMy2RikD_lSNjL1xBoJmkD-YZEXqRDyuf7Zf7jau5qHhshqMkt657t5AId87foVR5T8mM2Rss-_osNisoGjgQao98p4zt-wCs0I0p67aDiWIuBQQauZS1vnFpGH7WYWHK06Up9CUjnA",
+    ...    "userid":"7xpjJFC_10gI9yQwwn3swNz9ARgyWJ8m8O18y5_A"
+    ...    }
+    log    Check_IsValid
+    ${token}    Convert To String    V3_VhcfL8aXOv27NytdEQ5Mll0fWShP2q2IifgttRYaDCq0WcyTTKeJvxxCVKuRkij66h2ewBQ6-KyZ7-r9CsBWHLrKmmXIh1CqzW9T169EONDymk3BaJtcbNpqLeIa3EPn
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=    userid=
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    -20001
+    Dictionary Should Contain Key    ${res1}    errmsg
+
+userid错误/空
+    [Documentation]    body：
+    ...    {
+    ...    "token":"V2_HCT34T-tbavXMy2RikD_lSNjL1xBoJmkD-YZEXqRDyuf7Zf7jau5qHhshqMkt657t5AId87foVR5T8mM2Rss-_osNisoGjgQao98p4zt-wCs0I0p67aDiWIuBQQauZS1vnFpGH7WYWHK06Up9CUjnA",
+    ...    "userid":"7xpjJFC_10gI9yQwwn3swNz9ARgyWJ8m8O18y5_A"
+    ...    }
+    log    Check_IsValid
+    ${token}    Convert To String    V3_VhcfL8aXOv27NytdEQ5Mll0fWShP2q2IifgttRYaDCq0WcyTTKeJvxxCVKuRkij66h2ewBQ6-KyZ7-r9CsBWHLrKmmXIh1CqzW9T169EONDymk3BaJtcbNpqLeIa3EPn
+    ${userid}    Convert To String    123456
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    -20001
+    Dictionary Should Contain Key    ${res1}    errmsg
+
+获取商品列表信息
+    [Documentation]    body：
+    ...    {
+    ...    "appkey":"YOUME5BE427937AF216E88E0F84C0EF148BD29B691556",
+    ...    "goods_type":1 \ \
+    ...    }
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${appkey}    Convert To String    YOUME5BE427937AF216E88E0F84C0EF148BD29B691556
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=${appkey}    goods_type=${goods_type}
+    #获取商品列表信息
+    ${appkey}    Convert To String    YOUME5BE427937AF216E88E0F84C0EF148BD29B691556
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=${appkey}    goods_type=${goods_type}
+    #传参数
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /voice_package/GetCommodityList    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    commodity_list
+
+获取商品列表信息_appkey为空/非正确值
+    [Documentation]    body：
+    ...    {
+    ...    "appkey":"YOUME5BE427937AF216E88E0F84C0EF148BD29B691556",
+    ...    "goods_type":1 \ \
+    ...    }
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${appkey}    Convert To String    YOUME5BE427937AF216E88E0F84C0EF148BD29B691556
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=${appkey}    goods_type=${goods_type}
+    #获取商品列表信息
+    ${appkey}    Convert To String    YOUME5BE427937AF216E88E0F84C0EF148BD29B691556
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=    goods_type=${goods_type}
+    #传参数
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /voice_package/GetCommodityList    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    commodity_list
+
+获取商品列表信息_goods_type为空/非正确值
+    [Documentation]    body：
+    ...    {
+    ...    "appkey":"YOUME5BE427937AF216E88E0F84C0EF148BD29B691556",
+    ...    "goods_type":1 \ \
+    ...    }
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${appkey}    Convert To String    YOUME5BE427937AF216E88E0F84C0EF148BD29B691556
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=${appkey}    goods_type=${goods_type}
+    #获取商品列表信息
+    ${appkey}    Convert To String    YOUME5BE427937AF216E88E0F84C0EF148BD29B691556
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    goods_type=
+    #传参数
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /voice_package/GetCommodityList    ${data}    ${params}
+    Dictionary Should Contain Item    ${res1}    code    -20002
+
+生成订单
+    [Documentation]    body：
+    ...    {
+    ...    "appkey":"YOUME5BE427937AF216E88E0F84C0EF148BD29B691556",
+    ...    "userid":"7xpjJFC_10gI9yQwwn3swNz9ARgyWJ8m8O18y5_A",
+    ...    "token":"1c33f67d9ddcc61de07688545996a14ca54eaa7a",
+    ...    "goods":[
+    ...    {"goods_id":1,"goods_name":"","quantity":1,"deal_price":1,"valid_time":30}
+    ...
+    ...    ],
+    ...    "deal_type":1,
+    ...    "deal_source":"Web",
+    ...    "deal_total_fee":1,
+    ...    "deal_refer":"",
+    ...    "deal_from_ip":"",
+    ...    "deal_digest":"",
+    ...    "g_tk":1270697733
+    ...    }
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+
+生成订单_重复下单，每次生成订单号不同
+    [Documentation]    body：
+    ...    {
+    ...    "appkey":"YOUME5BE427937AF216E88E0F84C0EF148BD29B691556",
+    ...    "userid":"7xpjJFC_10gI9yQwwn3swNz9ARgyWJ8m8O18y5_A",
+    ...    "token":"1c33f67d9ddcc61de07688545996a14ca54eaa7a",
+    ...    "goods":[
+    ...    {"goods_id":1,"goods_name":"","quantity":1,"deal_price":1,"valid_time":30}
+    ...
+    ...    ],
+    ...    "deal_type":1,
+    ...    "deal_source":"Web",
+    ...    "deal_total_fee":1,
+    ...    "deal_refer":"",
+    ...    "deal_from_ip":"",
+    ...    "deal_digest":"",
+    ...    "g_tk":1270697733
+    ...    }
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    ${returndealid}    Get From Dictionary    ${res1}    deal_id
+    #重复下单
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res2}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res2}    msg
+    Dictionary Should Contain Key    ${res2}    deal_generate_time
+    ${returndealid2}    Get From Dictionary    ${res2}    deal_id
+    Should Not Be Equal    ${returndealid}    ${returndealid2}
+
+生成订单_价格为空
+    [Documentation]    body：
+    ...    {
+    ...    "appkey":"YOUME5BE427937AF216E88E0F84C0EF148BD29B691556",
+    ...    "userid":"7xpjJFC_10gI9yQwwn3swNz9ARgyWJ8m8O18y5_A",
+    ...    "token":"1c33f67d9ddcc61de07688545996a14ca54eaa7a",
+    ...    "goods":[
+    ...    {"goods_id":1,"goods_name":"","quantity":1,"deal_price":1,"valid_time":30}
+    ...
+    ...    ],
+    ...    "deal_type":1,
+    ...    "deal_source":"Web",
+    ...    "deal_total_fee":1,
+    ...    "deal_refer":"",
+    ...    "deal_from_ip":"",
+    ...    "deal_digest":"",
+    ...    "g_tk":1270697733
+    ...    }
+    log    generatedeal
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+
+生成订单_goods_id为空/错误
+    log    generatedeal
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+
+生成订单_价格非id对应的价格
+    log    generatedeal
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    10
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+
+生成订单_总价格内容为负数
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    -10
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+
+生成订单_总价格内容为空
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+
+生成订单_时间为空
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+
+生成订单_时间为非id对应的时间
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    25920
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+
+取消订单
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    ${returndeal}    Get From Dictionary    ${res1}    deal_id
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    user_id=${returnuserid}    token=${returntoken}    deal_id=${returndeal}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/CancelDeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+
+取消订单_取消不存在的订单
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    ${returndeal}    Get From Dictionary    ${res1}    deal_id
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    user_id=${returnuserid}    token=${returntoken}    deal_id=123456
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/CancelDeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+
+取消订单_重复请求取消同一个订单
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    ${returndeal}    Get From Dictionary    ${res1}    deal_id
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    user_id=${returnuserid}    token=${returntoken}    deal_id=${returndeal}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/CancelDeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+
+取消订单_订单存在用户为空
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    ${returndeal}    Get From Dictionary    ${res1}    deal_id
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    user_id=${returnuserid}    token=${returntoken}    deal_id=${returndeal}
+    ${params}    Create Dictionary    token=${returntoken}    userid=
+    ${res1}    Post Data2    ${URL}    /deal/CancelDeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+
+取消订单_用户id与订单id不匹配
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=123456    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    ${returndeal}    Get From Dictionary    ${res1}    deal_id
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    user_id=${returnuserid}    token=${returntoken}    deal_id=${returndeal}
+    ${params}    Create Dictionary    token=${returntoken}    userid=
+    ${res1}    Post Data2    ${URL}    /deal/CancelDeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+
+取消订单_订单存在，appkey为空
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=123456    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    ${returndeal}    Get From Dictionary    ${res1}    deal_id
+    ${data}    Create Dictionary    appkey=    user_id=${returnuserid}    token=${returntoken}    deal_id=${returndeal}
+    ${params}    Create Dictionary    token=${returntoken}    userid=
+    ${res1}    Post Data2    ${URL}    /deal/CancelDeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+
+取消订单_请求内容中只有订单id
+    log    Check_IsValid
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    ${returndeal}    Get From Dictionary    ${res1}    deal_id
+    ${data}    Create Dictionary    appkey=    user_id=    token=    deal_id=${returndeal}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/CancelDeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+
+获取用户购买商品信息
+    log    GetUserBuyPackage
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    goods_type=${goods_type}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /voice_package/GetUserBuyPackage    ${data}    ${params}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    package_list
+
+获取用户购买商品信息_appkey为空/错误
+    log    GetUserBuyPackage
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=    goods_type=${goods_type}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /voice_package/GetUserBuyPackage    ${data}    ${params}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    package_list
+
+获取用户购买商品信息_接口重复请求，返回的数据一致
+    log    GetUserBuyPackage
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=    goods_type=${goods_type}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /voice_package/GetUserBuyPackage    ${data}    ${params}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    package_list
+    #重复请求
+    ${data}    Create Dictionary    appkey=    goods_type=${goods_type}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /voice_package/GetUserBuyPackage    ${data}    ${params}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    package_list
+
+用户和token非一一对应的情况下返回错误
+    log    GetUserBuyPackage
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=asdgdfh14512    goods_type=${goods_type}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /voice_package/GetUserBuyPackage    ${data}    ${params}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    package_list
+
+获取用户购买商品信息_goods_type为空/非正确值
+    log    GetUserBuyPackage
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    goods_type="abc"
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /voice_package/GetUserBuyPackage    ${data}    ${params}
+    Dictionary Should Contain Item    ${res1}    code    -20002
+
+获取用户购买商品信息_appkey和goods_type均为空
+    log    GetUserBuyPackage
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    Dictionary Should Contain Key    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${goods_type}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=    goods_type=
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /voice_package/GetUserBuyPackage    ${data}    ${params}
+    Dictionary Should Contain Item    ${res1}    code    -20002
+
+查询订单支付状态
+    log    QueryDealPayStatus
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    ${returndealid}    Get From Dictionary    ${res1}    deal_id
+    #查询订单支付状态
+    ${pay_channel}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    user_id=${returnuserid}    token=${returntoken}    deal_id=${returndealid}    pay_channel=${pay_channel}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /pay/QueryDealPayStatus    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    paystate
+    Dictionary Should Contain Item    ${res1}    code    0
+
+查询订单支付状态_生成订单的用户和查询接口用的用户不一致
+    log    QueryDealPayStatus
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    ${returndealid}    Get From Dictionary    ${res1}    deal_id
+    #查询订单支付状态
+    ${pay_channel}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    user_id=123abc    token=${returntoken}    deal_id=${returndealid}    pay_channel=${pay_channel}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /pay/QueryDealPayStatus    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    paystate
+    Dictionary Should Contain Item    ${res1}    code    0
+
+查询订单支付状态_请求参数不正确
+    log    QueryDealPayStatus
+    ${token}    Convert To String    V3_RfOz7fnz2vnwGsdnw-CZ1RLqGxpn3PADqklWnultdwF2CsWAMlYW_eQ-g459Qz0ZuyutfXsUnmbE6EW7Co4sRbtLEaitG_TiF17tXqaEcFp1zesTuHv0_VaTWfOzQR_V
+    ${userid}    Convert To String    Uu4d7VC_10gI9yQwwn3swNz9ARgyWJ8m8OYwfO6g
+    ${data}    Create Dictionary    token=${token}    userid=${userid}
+    ${res1}    Post Data    ${URL}    /voice_package/Check_IsValid    ${data}
+    Dictionary Should Contain Item    ${res1}    code    0
+    #获取token和userid
+    ${returntoken}    Get From Dictionary    ${res1}    token
+    ${returnuserid}    Get From Dictionary    ${res1}    userid
+    #生成订单接口
+    ${userid}    Convert To String    ${returnuserid}
+    ${token}    Convert To String    ${returntoken}
+    ${goods_id}    Convert To Integer    1
+    ${quantity}    Convert To Integer    1
+    ${deal_price}    Convert To Integer    1
+    ${valid_time}    Convert To Integer    2592000
+    ${goodsid}    Create Dictionary    goods_id=${goods_id}    quantity=${quantity}    deal_price=${deal_price}    valid_time=${valid_time}
+    ${goods}    Create List    ${goodsid}
+    ${deal_type}    Convert To Integer    1
+    ${deal_source}    Convert To String    Web
+    ${deal_total_fee}    Convert To Integer    1
+    ${g_tk}    Convert To Integer    1270697733
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    userid=${userid}    token=${token}    goods=${goods}    deal_type=${deal_type}
+    ...    deal_source=${deal_source}    deal_total_fee=${deal_total_fee}    deal_refer=    deal_from_ip=    deal_digest=    g_tk=${g_tk}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /deal/generatedeal    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    deal_generate_time
+    ${returndealid}    Get From Dictionary    ${res1}    deal_id
+    #查询订单支付状态
+    ${pay_channel}    Convert To Integer    1
+    ${data}    Create Dictionary    appkey=YOUME5BE427937AF216E88E0F84C0EF148BD29B691556    user_id=123abc    token=124578    deal_id=5687    pay_channel=${pay_channel}
+    ${params}    Create Dictionary    token=${returntoken}    userid=${returnuserid}
+    ${res1}    Post Data2    ${URL}    /pay/QueryDealPayStatus    ${data}    ${params}
+    Dictionary Should Contain Key    ${res1}    msg
+    Dictionary Should Contain Key    ${res1}    paystate
+    Dictionary Should Contain Item    ${res1}    code    1003

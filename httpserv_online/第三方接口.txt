@@ -1,0 +1,146 @@
+*** Settings ***
+Suite Setup
+Test Setup        Set AppKey And Secret    ${APPKEY}    ${SECRET}
+Library           lib/YouMeRequestLib.py
+Library           RequestsLibrary
+Library           Collections
+
+*** Variables ***
+${URL}            http://api.youme.im/
+${SECRET}         s0f8zCk6WhDAhPrrAfRijzswxBvJotX+7Q1wE7DDxjOTANF56i2YFVKOw5qwBYahKGscVUj/RaiOAr0N5x7dqXTKsSrU/JgMwg8Ix9ZJCfcOpn3hbnPvbJl2gDlQrguHmBzxIFHrZBfir6LBFczFJS4E6l9arM237feU0W1FolMBAAE=
+${APPKEY}         YOUME3AA1C9CABAD4F182B2BE26D5BFCF8B79593EFAE3
+
+*** Test Cases ***
+查询游戏
+    [Documentation]    查询游戏
+    [Tags]    v2user
+    Log    query_app
+    ${ID}    Convert To Integer    971
+    ${data}    Create Dictionary    AppID=${ID}
+    Log    ${data}
+    ${res1}    Post Data V2    ${URL}    v2/im/query_app    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Key    ${res1}    ApiKey
+    Dictionary should contain Key    ${res1}    AppSecret
+    Dictionary should contain Key    ${res1}    AppName
+    Dictionary should contain Key    ${res1}    AppKey
+
+添加用户
+    [Documentation]    添加用户到运营后台
+    ...    要返回appkey
+    ...    apikey
+    [Tags]    v2user
+    Log    add_user_auth
+    ${user1}    Create Dictionary    UserID=user_test_0    NickName=user000    Token=123456
+    ${user2}    Create Dictionary    UserID=user_test_1    NickName=user001    Token=123456
+    ${user3}    Create Dictionary    UserID=user_test_2    NickName=user002    Token=123456
+    ${userlist}    Create List    ${user1}
+    Log    ${userlist}
+    ${data}    Create Dictionary    UserList=${userlist}
+    Log    ${data}
+    ${res}    Post Data V2    ${URL}    v2/im/add_user_auth    ${data}
+    Log    ${res}
+    Dictionary should contain Item    ${res}    ActionStatus    OK
+    Dictionary should contain Key    ${res}    UserList
+
+查询指定游戏的Talk频道列表
+    [Documentation]    get_talk_channel_list
+    [Tags]    v2user
+    Log    v2/im/get_talk_channel_list
+    ${ID}=    Convert To Integer    971
+    Set AppKey And Secret    YOUME3AA1C9CABAD4F182B2BE26D5BFCF8B79593EFAE3    s0f8zCk6WhDAhPrrAfRijzswxBvJotX+7Q1wE7DDxjOTANF56i2YFVKOw5qwBYahKGscVUj/RaiOAr0N5x7dqXTKsSrU/JgMwg8Ix9ZJCfcOpn3hbnPvbJl2gDlQrguHmBzxIFHrZBfir6LBFczFJS4E6l9arM237feU0W1FolMBAAE=
+    ${data1}    Create Dictionary    AppID=${ID}
+    ${res1}    Post Data V2    ${URL}    v2/im/get_talk_channel_list    ${data1}
+    Log    ${res1}
+    Dictionary should contain item    ${res1}    ActionStatus    OK
+    Dictionary should contain key    ${res1}    ChannelList
+
+查询指定游戏指定频道的Talk频道的用户列表
+    [Documentation]    get_talk_user_list_on_a_channel查询指定游戏指定Talk频道的用户列表
+    [Tags]    v2user
+    Log    get_talk_user_list_on_a_channel
+    ${ID}    Convert To Integer    971
+    ${data1}    Create Dictionary    AppID=${ID}    ChannelID=ch01
+    ${res1}    Post Data V2    ${URL}    v2/im/get_talk_user_list_on_a_channel    ${data1}
+    Dictionary should contain item    ${res1}    ActionStatus    OK
+    Dictionary should contain key    ${res1}    Total
+    Dictionary should contain key    ${res1}    UserList
+    Dictionary should contain key    ${res1}    AppID
+
+踢出指定游戏指定Talk频道的用户
+    [Documentation]    踢出指定游戏指定Talk频道的用户
+    [Tags]    v2user
+    Log    v2/im/admin_kick_user
+    Log    加一个用户
+    ${data1}    Create Dictionary    UserID=Robot0001    ChannelID=2019999
+    ${res1}    Post Data V2    ${URL}    v2/im/query_im_enter_channel    ${data1}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    ${ID}    Convert To Integer    971
+    ${TIME}    Convert To Integer    60
+    ${data2}    Create Dictionary    app_id=${ID}    channel_id=2019999    kick_user_id=Robot0001    kick_time=${TIME}    op_user=test
+    ${res2}    Post Data V2    ${URL}    v2/im/admin_kick_user    ${data2}
+
+查询指定游戏的Talk频道状态
+    [Documentation]    query_talk_channel_status查询指定游戏的Talk频道状态
+    [Tags]    v2user
+    Log    query_talk_channel_status
+    ${ID}=    Convert To Integer    971
+    ${data1}    Create Dictionary    AppID=${ID}    Channel=2019999
+    ${res}=    Post Data V2    ${URL}    v2/im/query_talk_channel_status    ${data1}
+    Dictionary should contain item    ${res}    ActionStatus    OK
+    Dictionary should contain key    ${res}    AppID
+    Dictionary should contain key    ${res}    ChannelID
+
+查询指定游戏的Talk用户状态
+    [Documentation]    查询指定游戏的Talk用户状态
+    ...    {
+    ...    \ "AppID": 1000,
+    ...    "UserID": "u#123"
+    ...    }
+    [Tags]    v2user
+    Log    v2/im/query_talk_user_status
+    ${ID}=    Convert To Integer    971
+    ${data1}    Create Dictionary    AppID=${ID}    UserID=Robot0001
+    ${res}=    Post Data V2    ${URL}    v2/im/query_talk_channel_status    ${data1}
+    Dictionary should contain item    ${res}    ActionStatus    OK
+    Dictionary should contain item    ${res}    AppID    ${ID}
+    Dictionary should contain Key    ${res}    Status
+
+查询指定游戏的Talk用户的通话记录
+    [Tags]    v2user
+    Log    v2/im/query_talk_user_call
+    ${ID}=    Convert To Integer    971
+    ${date}    Get Now Date
+    Log    ${date}
+    ${i}    Convert To Integer    0
+    ${limit}    Convert To Integer    10
+    ${data}    Create Dictionary    UserID=Robot0001    QueryDate=${date}    StartSeq=${i}    Limit=${limit}    AppID=${ID}
+    ${res}    Post Data V2    ${URL}    v2/im/query_talk_user_call    ${data}
+    Dictionary should contain Key    ${res}    Call
+    Dictionary should contain Key    ${res}    UserID
+    Dictionary should contain item    ${res}    ActionStatus    OK
+    Dictionary should contain Key    ${res}    AppID
+
+查询指定游戏视频流量
+    [Documentation]    查询指定游戏的视频流量
+    [Tags]    v2user
+    Log    query_video_traffic
+    ${ID}    Convert To Integer    971
+    ${time}    Get Time    Epoch
+    ${limit}    Convert To Integer    10
+    ${beginstr}    Evaluate    ${time}-36400
+    ${begin}    Convert To Integer    ${beginstr}
+    ${data}    Create Dictionary    AppID=${ID}    BeginTime=${begin}    EndTime=${time}    Limit=${limit}
+    ${res}    Post Data V2    ${URL}    v2/im/query_video_traffic    ${data}
+    Dictionary should contain item    ${res}    ActionStatus    OK
+    Dictionary should contain Key    ${res}    VideoTraffic
+    Dictionary should contain Key    ${res}    AppID
+
+设置Talk用户行为消息的抄回地址
+    [Documentation]    set_talk_cc_addr 回抄地址默认为 https://10.10.6.56:443/testfortest
+    [Tags]    v2user
+    Log    v2/im/set_talk_cc_addr
+    ${ID}    Convert To Integer    971
+    ${data}    Create Dictionary    AppID=${ID}    CCType="1,2,3,4,5,6,7,8,9"    CCAddr=https://10.10.6.56:443/testfortest
+    ${res}    Post Data V2    ${URL}    v2/im/set_talk_cc_addr    ${data}
+    Dictionary should contain item    ${res}    ActionStatus    OK

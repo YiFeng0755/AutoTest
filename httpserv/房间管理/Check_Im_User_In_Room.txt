@@ -1,0 +1,92 @@
+*** Settings ***
+Documentation     body为json格式，各个字段解释如下：
+...
+...               “RoomID” \ \ \ \ \ 房间ID，app内唯一，字符串
+...
+...               “UserID"” \ \ \ \ \ 用户名，字符串
+...
+...               {
+...               "UserID":"jason",
+...               "RoomID":"jason_room"
+...               }
+Force Tags        Check_Im_User_In_Room
+Default Tags      user
+Library           RequestsLibrary
+Library           Collections
+Library           ../lib/YouMeRequestLib.py
+Library           ../lib/YouMeAnchorRankLib.py
+
+*** Variables ***
+${SECRET}         uQAuo9xbYOevRl7oyTm0kR60WMoLDmIzgucehu8lkV0Y2ZKOEP84Y5cWyliGlns0nJK2kgDDGEsCsi/SUWnn0jKQ0REteItDMn/5rihp+Dd8I0V1FMcMeXTSPWDcV+lTiF9so2bpIpLsMlUdHGUVkUMIdUv6vgmtZflkfALM6AMBAAE=    # 用于sha1加密的 秘钥
+${APPKEY}         YOUME3C8DDD417211056AAEC1A518FBA43F34577EC958    # 应用标识
+${URL}            http://106.75.14.78:18080/
+
+*** Test Cases ***
+检查IM用户是否在某一房间
+    [Documentation]    body实例
+    ...
+    ...    {
+    ...    "UserID":"jason",
+    ...    "RoomID":"jason_room"
+    ...    }
+    log    Check_Im_User_In_Room
+    ${data}    Create Dictionary    UserID=jason    RoomID=jason_room
+    ${res1}    Post Data    ${URL}    v1/im/check_im_user_in_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+RoomID为空
+    log    Check_Im_User_In_Room
+    ${data}    Create Dictionary    UserID=jason    RoomID=
+    ${res1}    Post Data    ${URL}    v1/im/check_im_user_in_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+RoomID长度超过300字符
+    log    Check_Im_User_In_Room
+    ${data}    Create Dictionary    UserID=jason    RoomID=1234567654567654534512345676545676545345123456765456765453451234567654567654534512345676545676545345123456765456765453451234567654567654534512345676545676545345
+    ${res1}    Post Data    ${URL}    v1/im/check_im_user_in_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID为空
+    log    Check_Im_User_In_Room
+    ${data}    Create Dictionary    UserID=    RoomID=jason_room
+    ${res1}    Post Data    ${URL}    v1/im/check_im_user_in_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+UserID长度超过300字符
+    log    Check_Im_User_In_Room
+    ${data}    Create Dictionary    UserID=1234567654567654534512345676545676545345123456765456765453451234567654567654534512345676545676545345123456765456765453451234567654567654534512345676545676545345    RoomID=jason_room
+    ${res1}    Post Data    ${URL}    v1/im/check_im_user_in_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+检查加入房间后被踢出退出房间的用户
+    log    Check_Im_User_In_Room
+    Leave Channel    user1234    room123
+    ${data}    Create Dictionary    UserID=jason    RoomID=jason_room
+    ${res1}    Post Data    ${URL}    v1/im/check_im_user_in_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+检查加入房间的用户是否在房间内
+    log    Check_Im_User_In_Room
+    Join Channel    user1234    room123
+    ${data}    Create Dictionary    UserID=jason    RoomID=jason_room
+    ${res1}    Post Data    ${URL}    v1/im/check_im_user_in_room    ${data}
+    Dictionary should contain Item    ${res1}    ActionStatus    OK
+    Dictionary should contain Item    ${res1}    ErrorCode    0
+
+*** Keywords ***
+Join Channel
+    [Arguments]    ${UserID}    ${ChannelID}
+    ${data}    Create Dictionary    UserID=${UserID}    ChannelID=${ChannelID}
+    ${res1}    Post Data    ${URL}    v1/im/query_im_enter_channel    ${data}
+
+Leave Channel
+    [Arguments]    ${userid}    ${roomid}
+    Join Channel    user123    room245
+    ${data}    Create Dictionary    UserID=user123    ChannelID=room245
+    ${res1}    Post Data    ${URL}    v1/im/query_im_leave_channel    ${data}
